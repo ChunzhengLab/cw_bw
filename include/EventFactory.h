@@ -19,8 +19,7 @@
 class EventFactory {
 public:
     /// 构造：传入全局配置
-    explicit EventFactory(const Config& cfg)
-      : cfg_(cfg), rnd_(std::random_device{}()) {}
+    explicit EventFactory(const Config& cfg);
 
     /// 生成并返回一个事件，内部完成分箱和粒子构建
     Event GetEvent(float centrality);
