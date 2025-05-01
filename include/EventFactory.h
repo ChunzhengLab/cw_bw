@@ -3,8 +3,6 @@
 
 #include <vector>
 #include <array>
-#include <cmath>
-#include <random>
 #include <memory>
 #include <TF1.h>
 #include <TVector2.h>

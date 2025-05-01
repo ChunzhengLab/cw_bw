@@ -36,3 +36,4 @@ core.*
 valgrind*.txt
 *.pdf
 *.csv
+*.cache

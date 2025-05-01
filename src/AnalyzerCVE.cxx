@@ -1,9 +1,8 @@
-#include "AnalyzerCVE.h"
-#include <TFile.h>
-#include <algorithm>
 #include <cmath>
-#include <stdexcept>
+#include <algorithm>
+#include <TFile.h>
 #include <TString.h>
+#include "AnalyzerCVE.h"
 
 AnalyzerCVE::AnalyzerCVE() {
     // Initialize all pointers to nullptr
@@ -220,7 +219,7 @@ void AnalyzerCVE::Process(const Event& evt) {
         if (pid==3122) {
             h_pt_lambda->Fill(pt);
             h_eta_lambda->Fill(eta);
-            h_phi_lambda->Fill(phi); 
+            h_phi_lambda->Fill(phi);
             p_v2_pt_lambda->Fill(pt, std::cos(2*phi));
         } else {
             h_pt_proton->Fill(pt);

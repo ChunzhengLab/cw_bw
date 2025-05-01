@@ -2,7 +2,6 @@
 #define CW_BW_LBC_ANALYZERCVE_H
 
 #include <string>
-#include <vector>
 #include <TString.h>
 #include <TH1D.h>
 #include <TProfile.h>

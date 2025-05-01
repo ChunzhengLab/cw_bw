@@ -1,11 +1,12 @@
 #include <memory>
-#include <TF1.h>
-#include "EventFactory.h"
-#include "Config.h"
 #include <cmath>
+#include <random>
 #include <TF1.h>
 #include <TString.h>
+#include "Config.h"
 #include "EventParticle.h"
+#include "EventFactory.h"
+
 
 // Constants for maximum momentum and default Ry
 static constexpr double kMaxMomentum = 10.0;  // GeV/c, upper p* cutoff
@@ -31,7 +32,7 @@ inline double ComputePhiBFromPhiS(double phi_s, double Rx, double Ry) {
 }
 
 EventFactory::EventFactory(const Config& cfg)
-  : cfg_(cfg), rnd_(std::random_device{}()) 
+  : cfg_(cfg), rnd_(std::random_device{}())
 {
     int nBins = cfg_.Tkin.size();
     fE_proton_.reserve(nBins);

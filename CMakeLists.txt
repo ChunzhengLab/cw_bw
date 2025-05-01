@@ -6,6 +6,7 @@ find_package(ROOT REQUIRED COMPONENTS Core RIO Hist Tree)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # 查找 yaml-cpp 库
 find_package(yaml-cpp REQUIRED)
