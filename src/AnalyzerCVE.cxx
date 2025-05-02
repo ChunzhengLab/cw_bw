@@ -250,7 +250,7 @@ void AnalyzerCVE::Process(const Event &evt) {
       continue;
     float pt = p.Pt();
     float eta = p.Eta();
-    float phi = p.Phi();
+    float phi = TVector2::Phi_0_2pi(p.Phi());
     if (pt < 0.2f || pt > 5.0f || std::fabs(eta) > 0.8f)
       continue;
 

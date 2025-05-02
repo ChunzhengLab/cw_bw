@@ -19,12 +19,13 @@ Config Config::Load(const std::string &filename) {
     cfg.mu5TeV.push_back(val.as<double>());
   }
 
-  if (!config["k5TeV"])
+  if (!config["KinCutRatio"])
     throw std::runtime_error("Config::Load(" + filename +
-                             "): Missing required node: k5TeV");
-  for (const auto &val : config["k5TeV"]) {
-    cfg.k5TeV.push_back(val.as<double>());
+                             "): Missing required node: KinCutRatio");
+  for (const auto &val : config["KinCutRatio"]) {
+    cfg.KinCutRatio.push_back(val.as<double>());
   }
+
 
   if (!config["NBDLow"])
     throw std::runtime_error("Config::Load(" + filename +
@@ -40,11 +41,11 @@ Config Config::Load(const std::string &filename) {
     cfg.NBDHigh.push_back(val.as<double>());
   }
 
-  if (!config["fracLBC"])
+  if (!config["NBDSigma"])
     throw std::runtime_error("Config::Load(" + filename +
-                             "): Missing required node: fracLBC");
-  for (const auto &val : config["fracLBC"]) {
-    cfg.fracLBC.push_back(val.as<double>());
+                             "): Missing required node: NBDSigma");
+  for (const auto &val : config["NBDSigma"]) {
+    cfg.NBDSigma.push_back(val.as<double>());
   }
 
   if (!config["Tkin"])
@@ -89,16 +90,16 @@ Config Config::Load(const std::string &filename) {
                              "): Missing required node: ratioProtonLambda");
   cfg.ratioProtonLambda = config["ratioProtonLambda"].as<double>();
 
-  // Optional: ratioProtonInclusive
+  // ratioProtonInclusive
   if (config["ratioProtonInclusive"])
     cfg.ratioProtonInclusive = config["ratioProtonInclusive"].as<double>();
   else
     cfg.ratioProtonInclusive = 5.0 / 120.0;
 
-  // Optional: isDebug
-  cfg.isDebug = false;
-  if (config["isDebug"])
-    cfg.isDebug = config["isDebug"].as<bool>();
+  if (!config["fracLBC"])
+    throw std::runtime_error("Config::Load(" + filename +
+                             "): Missing required node: fracLBC");
+  cfg.fracLBC =  config["fracLBC"].as<double>();
 
   // Verify that all centrality-binned vectors have the same length
   {
@@ -109,8 +110,9 @@ Config Config::Load(const std::string &filename) {
                                  "): vector size mismatch for '" + name + "'");
     };
     check(cfg.mu5TeV, "mu5TeV");
-    check(cfg.k5TeV, "k5TeV");
+    check(cfg.KinCutRatio, "KinCutRatio");
     check(cfg.NBDHigh, "NBDHigh");
+    check(cfg.NBDSigma, "NBDSigma");
     check(cfg.Tkin, "Tkin");
     check(cfg.betaT, "betaT");
     check(cfg.n, "n");

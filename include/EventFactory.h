@@ -3,12 +3,12 @@
 
 #include <TF1.h>
 #include <TLorentzVector.h>
-#include <TRandom3.h>
 #include <TVector2.h>
 #include <TVector3.h>
 #include <array>
 #include <memory>
 #include <vector>
+#include <random>
 
 #include "Config.h"
 #include "EventParticle.h"
@@ -37,7 +37,7 @@ private:
   std::vector<std::unique_ptr<TF1>> fE_lambda_;
 
   const Config &cfg_;
-  mutable TRandom3 rnd_;
+  mutable std::mt19937_64 rng_;
 };
 
 #endif // CW_BW_LBC_EVENTFACTORY_H

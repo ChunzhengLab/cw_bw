@@ -37,3 +37,4 @@ valgrind*.txt
 *.pdf
 *.csv
 *.cache
+*.ropeproject

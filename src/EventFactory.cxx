@@ -1,11 +1,13 @@
 #include "EventFactory.h"
 #include "Config.h"
 #include "EventParticle.h"
-#include <TF1.h>
 #include <TString.h>
 #include <cmath>
 #include <memory>
 #include <random>
+#include <algorithm>
+
+using Uniform = std::uniform_real_distribution<double>;
 
 // Constants for maximum momentum and default Ry
 static constexpr double kMaxMomentum = 10.0; // GeV/c, upper p* cutoff
@@ -24,16 +26,14 @@ static double MaxwellJuttnerKernel(double *x, double *par) {
 // Rx,Ry
 inline double ComputePhiBFromPhiS(double phi_s, double Rx, double Ry) {
   // tan φ_b = (Ry²/Rx²) tan φ_s
-  double tanb = (Ry * Ry) / (Rx * Rx) * std::tan(phi_s);
-  double phi_b = std::atan(tanb);
-  // adjust into correct quadrant
-  if (phi_s > M_PI / 2 && phi_s < 3 * M_PI / 2)
-    phi_b += M_PI;
+  double y = std::sin(phi_s)/(Ry*Ry);
+  double x = std::cos(phi_s)/(Rx*Rx);
+  double phi_b = std::atan2(y, x);
   return phi_b;
 }
 
 EventFactory::EventFactory(const Config &cfg)
-    : cfg_(cfg), rnd_(std::random_device{}()) {
+    : cfg_(cfg), rng_(std::random_device{}()) {
   int nBins = cfg_.Tkin.size();
   fE_proton_.reserve(nBins);
   fE_lambda_.reserve(nBins);
@@ -68,32 +68,66 @@ Event EventFactory::GetEvent(float centrality) {
 
 // 根据中心度设定分箱
 void EventFactory::DetermineCentBin(Event &evt) const {
-  evt.centBin = 0;
-  for (int i = 0; i < static_cast<int>(cfg_.NBDLow.size()); ++i) {
-    if (evt.centrality >= cfg_.NBDLow[i] && evt.centrality < cfg_.NBDHigh[i]) {
-      evt.centBin = i;
-      break;
-    }
+  float cent = evt.centrality;
+  if (cent < 10.0f || cent >= 60.0f) {
+    throw std::runtime_error("Unsupported centrality range: must be in [10,60)%");
   }
+
+  if (cent >= 10.0f && cent < 20.0f)
+    evt.centBin = 0;
+  else if (cent >= 20.0f && cent < 30.0f)
+    evt.centBin = 1;
+  else if (cent >= 30.0f && cent < 40.0f)
+    evt.centBin = 3;
+  else if (cent >= 40.0f && cent < 50.0f)
+    evt.centBin = 4;
+  else if (cent >= 50.0f && cent < 60.0f)
+    evt.centBin = 5;
 }
 
 // 构建该事件的所有粒子
 void EventFactory::BuildParticles(Event &evt) {
   int bin = evt.centBin;
-  int multiplicity = static_cast<int>(cfg_.mu5TeV[bin]);
+  // 使用 STL 负二项分布和 uniform 分布
+  // 考虑 pT/η 裁剪后的保留比例
+  double mu_pre = cfg_.mu5TeV[bin] / cfg_.KinCutRatio[bin];
+  double mu = mu_pre;
+  double sigma = cfg_.NBDSigma[bin];
+  double variance = sigma * sigma;
+  double p = mu / variance;
+  int r_int = static_cast<int>(std::round(mu * mu / (variance - mu)));
+  std::negative_binomial_distribution<int> nbdist(r_int, p);
+  Uniform uniform(0.0, 1.0);
+
+  unsigned int multiplicity;
+  do {
+    multiplicity = static_cast<unsigned int>(nbdist(rng_));
+  } while (multiplicity < static_cast<unsigned int>(cfg_.NBDLow[bin]) ||
+           multiplicity > static_cast<unsigned int>(cfg_.NBDHigh[bin]));
+
+  // 只生成 Lambda 和 Proton，修正多重数
+  multiplicity = static_cast<unsigned int>(
+      multiplicity * cfg_.ratioProtonInclusive *
+      (1.0 + cfg_.ratioProtonLambda) / cfg_.ratioProtonLambda);
+
   evt.particles.clear();
-  evt.particles.reserve(multiplicity);
+  evt.particles.reserve(2 * multiplicity);
   int nextSN = 0;
 
-  for (int i = 0; i < multiplicity; ++i) {
+  for (unsigned int i = 0; i < multiplicity; ++i) {
     int sn = ++nextSN;
 
     // 1) 发射点抽样
-    float x, y;
-    SeedEmissionPoint(x, y, bin);
+    float u = uniform(rng_);
+    float phi_s = 2 * static_cast<float>(M_PI) * uniform(rng_);
+    float x = std::sqrt(u) * static_cast<float>(cfg_.Rx[bin]) * std::cos(phi_s);
+    float y = std::sqrt(u) * static_cast<float>(kRyDefault) * std::sin(phi_s);
 
     // 2) PID 抽样
-    int pid = GivePidBasedOnRatio(cfg_.ratioProtonLambda);
+    float p_pid = uniform(rng_);
+    int pid = (p_pid < cfg_.ratioProtonLambda / (cfg_.ratioProtonLambda + 1.0f) ? 2212 : 3122);
+    if (uniform(rng_) < 0.5f)
+      pid = -pid;
 
     // 3) 计算流场 boost (species-dependent ρ2)
     TVector3 boost = GetLocalBoostVector(x, y, bin, pid);
@@ -113,9 +147,19 @@ void EventFactory::BuildParticles(Event &evt) {
     p.SetSerialNumber(sn);
 
     // 6) LBC 配对 (inline probability)
-    if (rnd_.Rndm() < cfg_.fracLBC[bin]) {
+    if (uniform(rng_) < cfg_.fracLBC) {
       int sn_friend = ++nextSN;
-      int pid_friend = -pid;
+      int pid_friend;
+      if (pid == 2212)
+        pid_friend = -3122;
+      else if (pid == -2212)
+        pid_friend = 3122;
+      else if (pid == 3122)
+        pid_friend = -2212;
+      else if (pid == -3122)
+        pid_friend = 2212;
+      else
+        pid_friend = -pid;
       double E_friend = SampleEnergy(bin, pid_friend);
       auto dir_friend = SampleDirection();
       TLorentzVector mom_friend(dir_friend[0] * E_friend,
@@ -135,17 +179,22 @@ void EventFactory::BuildParticles(Event &evt) {
     // 7) 添加主粒子
     evt.particles.push_back(std::move(p));
   }
+  // 随机打乱粒子顺序后截断至 multiplicity，不再区分主粒子和 LBC 伴侣
+  std::shuffle(evt.particles.begin(), evt.particles.end(), rng_);
+  if (evt.particles.size() > multiplicity) {
+    evt.particles.erase(evt.particles.begin() + multiplicity, evt.particles.end());
+    evt.particles.shrink_to_fit();
+  }
 }
 
 // 抽样发射点 (x,y)
 void EventFactory::SeedEmissionPoint(float &x, float &y, int bin) const {
-  // Elliptical uniform area sampling: r_norm = sqrt(u), phi_s uniform
-  float u = rnd_.Rndm();
-  float r_norm = std::sqrt(u);
-  float phi_s = 2 * static_cast<float>(M_PI) * rnd_.Rndm();
+  Uniform uniform(0.0, 1.0);
+  float u = uniform(rng_);
+  float phi_s = 2 * static_cast<float>(M_PI) * uniform(rng_);
   // Position inside ellipse with semi-axes Rx and Ry
-  x = r_norm * static_cast<float>(cfg_.Rx[bin]) * std::cos(phi_s);
-  y = r_norm * static_cast<float>(kRyDefault) * std::sin(phi_s);
+  x = std::sqrt(u) * static_cast<float>(cfg_.Rx[bin]) * std::cos(phi_s);
+  y = std::sqrt(u) * static_cast<float>(kRyDefault) * std::sin(phi_s);
 }
 
 // 计算流场 boost 向量
@@ -168,7 +217,8 @@ TVector3 EventFactory::GetLocalBoostVector(float x, float y, int bin,
       std::pow(r_norm, cfg_.n[bin]) * (rho0 + rho2 * std::cos(2 * phi_b));
 
   // longitudinal pseudorapidity sampling
-  double cstheta = 2.0 * (rnd_.Rndm() - 0.5);
+  Uniform uniform(0.0, 1.0);
+  double cstheta = 2.0 * (uniform(rng_) - 0.5);
   double thetas = std::acos(cstheta);
   double etas = -std::log(std::tan(thetas / 2.0));
 
@@ -182,9 +232,10 @@ TVector3 EventFactory::GetLocalBoostVector(float x, float y, int bin,
 
 // 根据比例抽 PID
 int EventFactory::GivePidBasedOnRatio(float ratio) const {
-  float p = rnd_.Rndm();
+  Uniform uniform(0.0, 1.0);
+  float p = uniform(rng_);
   int pid = (p < ratio / (ratio + 1.0f) ? 2212 : 3122);
-  if (rnd_.Rndm() < 0.5f)
+  if (uniform(rng_) < 0.5f)
     pid = -pid;
   return pid;
 }
@@ -197,8 +248,9 @@ double EventFactory::SampleEnergy(int bin, int pid) const {
 
 // 均匀方向抽样
 std::array<double, 3> EventFactory::SampleDirection() const {
-  double cosTheta = 2.0 * rnd_.Rndm() - 1.0;
+  Uniform uniform(0.0, 1.0);
+  double cosTheta = 2.0 * uniform(rng_) - 1.0;
   double sinTheta = std::sqrt(1.0 - cosTheta * cosTheta);
-  double phi = 2.0 * M_PI * rnd_.Rndm();
+  double phi = 2.0 * M_PI * uniform(rng_);
   return {sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta};
 }

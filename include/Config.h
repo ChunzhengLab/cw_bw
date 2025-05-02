@@ -10,10 +10,10 @@ struct Config {
 
   // Negative Binomial distribution parameters
   std::vector<double> mu5TeV;
-  std::vector<double> k5TeV;
+  std::vector<double> KinCutRatio;
   std::vector<double> NBDLow;
   std::vector<double> NBDHigh;
-  std::vector<double> fracLBC;
+  std::vector<double> NBDSigma;
   // Kinetic freeze-out temperature per centrality bin
   std::vector<double> Tkin;
   // Blast-Wave flow parameters
@@ -26,7 +26,7 @@ struct Config {
   // Particle ratio & debug flag
   double ratioProtonLambda;
   double ratioProtonInclusive;
-  bool isDebug;
+  double fracLBC;
 
   /// Load configuration from a YAML file
   static Config Load(const std::string &filename);
