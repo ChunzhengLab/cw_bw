@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 #include <random>
+#include <cmath>
 
 #include "Config.h"
 #include "EventParticle.h"
@@ -23,21 +24,24 @@ public:
   Event GetEvent(float centrality);
 
 private:
-  void DetermineCentBin(Event &evt) const;
-  void BuildParticles(Event &evt);
-  void SeedEmissionPoint(float &x, float &y, int bin) const;
-  TVector3 GetLocalBoostVector(float x, float y, int bin, int pid) const;
-  int GivePidBasedOnRatio(float ratio) const;
-  // sample E* from prebuilt Maxwell–Jüttner TF1 based on bin and pid
-  double SampleEnergy(int bin, int pid) const;
-  std::array<double, 3> SampleDirection() const;
+  // Configuration and random number generator
+  const Config &cfg_;
+  mutable std::mt19937_64 rng_{std::random_device{}()};
+  // Uniform distributions for random sampling
+  mutable std::uniform_real_distribution<double> dist01_{0.0, 1.0};
+  mutable std::uniform_real_distribution<double> dist2pi_{0.0, 2.0 * M_PI};
 
   // Prebuilt energy samplers (Maxwell–Jüttner) per bin/species
   std::vector<std::unique_ptr<TF1>> fE_proton_;
   std::vector<std::unique_ptr<TF1>> fE_lambda_;
 
-  const Config &cfg_;
-  mutable std::mt19937_64 rng_;
+  void DetermineCentBin(Event &evt) const;
+  void BuildParticles(Event &evt);
+  inline void SeedEmissionPoint(float &x, float &y, int bin) const;
+  inline int GivePidBasedOnRatio(float ratio) const;
+  TVector3 GetLocalBoostVector(float x, float y, int bin, int pid) const;
+  double SampleEnergy(int bin, int pid) const;
+  inline std::array<double, 3> SampleDirection() const;
 };
 
 #endif // CW_BW_LBC_EVENTFACTORY_H

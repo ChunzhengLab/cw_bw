@@ -110,9 +110,9 @@ void AnalyzerCVE::Init() {
   h_eta_proton =
       new TH1D("h_eta_proton", "#eta proton; #eta; Counts", 50, -1.0, 1.0);
   h_phi_lambda =
-      new TH1D("h_phi_lambda", "#phi #Lambda; #phi; Counts", 64, 0, 2 * M_PI);
+      new TH1D("h_phi_lambda", "#phi #Lambda; #phi; Counts", 64, -M_PI, M_PI);
   h_phi_proton =
-      new TH1D("h_phi_proton", "#phi proton; #phi; Counts", 64, 0, 2 * M_PI);
+      new TH1D("h_phi_proton", "#phi proton; #phi; Counts", 64, -M_PI, M_PI);
 
   // v2 TProfiles vs pT
   p_v2_pt_lambda =
@@ -250,7 +250,7 @@ void AnalyzerCVE::Process(const Event &evt) {
       continue;
     float pt = p.Pt();
     float eta = p.Eta();
-    float phi = TVector2::Phi_0_2pi(p.Phi());
+    float phi = p.Phi();
     if (pt < 0.2f || pt > 5.0f || std::fabs(eta) > 0.8f)
       continue;
 

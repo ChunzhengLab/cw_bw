@@ -1,3 +1,25 @@
+"""
+Script: build_specLambda_root.py
+
+Purpose:
+    Batch-extract TGraphErrors and TGraphAsymmErrors objects from multiple ROOT files
+    based on a CSV mapping file, rename them, and consolidate into a single output ROOT file.
+
+Usage:
+    1. Prepare a CSV file (default name: graph_mapping.csv) with columns:
+       file, table, graph, cent, category
+    2. Adjust the `csv_path` variable if the CSV is located elsewhere.
+    3. Run the script: python build_specLambda_root.py
+    4. The extracted graphs will be saved into 'spec_lambda_infered.root'.
+
+CSV Format:
+    file      - Path to input ROOT file
+    table     - Directory name within the ROOT file
+    graph     - Name of the TGraphErrors or TGraphAsymmErrors object
+    cent      - Centrality label used in output graph name
+    category  - Category label used in output graph name
+"""
+
 import ROOT
 import csv
 import os

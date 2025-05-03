@@ -14,10 +14,10 @@ static void PrintUsage() {
   std::cout << "Usage: bwgen [options]\n"
             << "  -h, --help               Show this help message\n"
             << "  -c, --config <file>      Configuration YAML file (default: "
-               "configs/default.yaml)\n"
+               "../configs/default.yaml)\n"
             << "  -o, --output-file <file> Output ROOT file name (default: "
                "result.root)\n"
-            << "  -C, --centrality <float>  Centrality percentage (10-60%)\n"
+            << "  -C, --centrality <int>    Centrality % (one of 15,25,35,45,55)\n"
             << "  -n, --events <int>       Number of events to simulate (overrides config)\n"
             << "  -r, --ratio-proton-lambda <float>    Override ratioProtonLambda\n"
             << "  -i, --ratio-proton-inclusive <float> Override ratioProtonInclusive\n"
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
   // 1. 解析命令行参数
   std::string configPath = "../configs/default.yaml";
   std::string outputFile = "result.root";
-  float centralityArg = -1.0f;
+  int centralityArg = -1;
   int nEventsArg = -1;
   float ratioProtonLambdaArg = -1.0f;
   float ratioProtonInclusiveArg = -1.0f;
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
       outputFile = optarg;
       break;
     case 'C':
-      centralityArg = std::stof(optarg);
+      centralityArg = std::stoi(optarg);
       break;
     case 'n':
       nEventsArg = std::stoi(optarg);
@@ -76,8 +76,9 @@ int main(int argc, char **argv) {
     }
   }
 
-  if (centralityArg < 10.f || centralityArg > 60.0f) {
-    std::cerr << "Error: --centrality must be between 10 and 60\n";
+  if (centralityArg != 15 && centralityArg != 25 && centralityArg != 35 &&
+      centralityArg != 45 && centralityArg != 55) {
+    std::cerr << "Error: --centrality must be one of {15, 25, 35, 45, 55}\n";
     return 1;
   }
 

@@ -16,14 +16,14 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
-// integrateSpectra.C
+// PrepareLambdaSpectra.C
 // -----------------------------------------------------------------------------
-// Compute the integral yield of each Λ spectrum and plot it versus centrality.
+// Prepare Λ spectrum.
 // Usage examples:
-//     root -l -q integrateSpectra.C
-//     root -l -q 'integrateSpectra.C("mySpectra.root")'
+//     root -l -q PrepareLambdaSpectra.C
+//     root -l -q 'PrepareLambdaSpectra.C("mySpectra.root")'
 // -----------------------------------------------------------------------------
-void integrateSpectra(const char *filename = "spec_v2.root") {
+void PrepareLambdaSpectra(const char *filename = "spec_v2.root") {
   gStyle->SetOptStat(0);
 
   // --------------------------------------------------------------------------
@@ -31,7 +31,7 @@ void integrateSpectra(const char *filename = "spec_v2.root") {
   // --------------------------------------------------------------------------
   TFile *f = TFile::Open(filename);
   if (!f || f->IsZombie()) {
-    cerr << "integrateSpectra: Cannot open file " << filename << endl;
+    cerr << "PrepareLambdaSpectra: Cannot open file " << filename << endl;
     return;
   }
 
@@ -62,42 +62,23 @@ void integrateSpectra(const char *filename = "spec_v2.root") {
   };
 
   // --------------------------------------------------------------------------
-  // 4. Loop over spectra, integrate, and store results
+  // 4. Loop over spectra
   // --------------------------------------------------------------------------
   double cCenter[nC];
-  double yield[nC];
   // Will later need integrals of 10 - 20 % and 20 - 40 % to build 20 - 30 %
   // spectrum
   double yield1020 = -1., yield2040 = -1.;
   TGraphAsymmErrors *g2030ptr =
       nullptr; // store the interpolated 20 - 30 % spectrum for later
 
-  cout << "-------------------------------------------------------------"
-       << endl;
-  cout << std::left << std::setw(20) << "Graph name" << std::setw(14)
-       << "Centrality"
-       << "Integral yield" << endl;
-  cout << "-------------------------------------------------------------"
-       << endl;
-
   for (int i = 0; i < nC; ++i) {
     cCenter[i] = 0.5 * (cLow[i] + cHigh[i]);
 
     auto g = dynamic_cast<TGraphAsymmErrors *>(f->Get(gname[i]));
     if (!g) {
-      cerr << "integrateSpectra: Cannot find graph " << gname[i] << endl;
+      cerr << "PrepareLambdaSpectra: Cannot find graph " << gname[i] << endl;
       return;
     }
-
-    yield[i] = integrateGraph(g);
-    // Cache integrals needed for 20 - 30 % interpolation
-    if (i == 2)
-      yield1020 = yield[i]; // 10 - 20 %
-    if (i == 3)
-      yield2040 = yield[i]; // 20 - 40 %
-    cout << std::left << std::setw(20) << gname[i] << std::right << std::setw(6)
-         << std::fixed << std::setprecision(1) << cCenter[i] << "%     "
-         << std::setprecision(6) << yield[i] << endl;
   }
   cout << "-------------------------------------------------------------"
        << endl;

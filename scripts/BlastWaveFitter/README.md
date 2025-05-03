@@ -1,7 +1,7 @@
-# Blast‐Wave Fitter
-### Author: Chunzheng Wang
+# Blast‐Wave Fitter 公式集
+### Chunzheng Wang
 
-## 1. 流速剖面（含二阶调制）
+## 1 流速剖面（含二阶调制）
 $$
 \rho(r,\phi)\;=\;r^{\,n}\,\Bigl[\rho_0+\rho_2\cos\bigl(2\phi_b\bigr)\bigr],
 \qquad r\in[0,1].
@@ -17,20 +17,12 @@ $$
 面积元为 $dA = R_x R_y\, r\,dr\,d\phi$。
 
 ## 1.1 坐标与角度变换
-
-- 椭圆冻结面上的极坐标映射  
-  $$
-    x = R_x\,r\cos\phi,\quad
-    y = R_y\,r\sin\phi,\quad
-    r\in[0,1],\ \phi\in[0,2\pi).
-  $$
+坐标映射公式已在上文第 1 节给出，故此处省略复述。
 
 - 流速方向角 $\phi_b$ 与位置角 $\phi$ 的关系  
   $$
     \tan\phi_b
     =\frac{R_x^2}{R_y^2}\tan\phi
-    \quad\Longrightarrow\quad
-    \phi_b = \arctan\!\Bigl(\tfrac{R_x^2}{R_y^2}\tan\phi\Bigr)\;(\bmod\,\pi).
   $$
 
 下面所有含 $\phi_b$ 的余弦项与权重均使用这一角度。
@@ -53,9 +45,9 @@ $$
 
 ## 2. 单粒子谱 (Spectrum)
 
-本模型假设在每个流体元的局部共动系中，粒子的动量分布服从**玻尔兹曼分布**：
+本模型假设在每个流体元的局部共动系中，粒子的能量分布服从**相对论 Maxwell–Jüttner 分布**：
 $$
-  f_0(p^*) \;\propto\; \exp\bigl(-E^*/T_{\rm kin}\bigr),
+  f_0(E^*) \;\propto\; p^*\,E^*\,\exp\!\Bigl(-\frac{E^*}{T_{\rm kin}}\Bigr),
   \quad E^* = p^\mu u_\mu = m_T\cosh\rho - p_T\sinh\rho\cos(\phi_p-\phi_b).
 $$
 在对该分布在角度和径向坐标上做积分并归一化后，即得到下面所示的包含修正贝塞尔函数 $K_1$ 和 $I_0$ 的谱表达式。
@@ -65,11 +57,8 @@ $$
 =\;N_0 R_x R_y \!\int_{0}^{1}\!r\,dr\!\int_{0}^{2\pi}\!d\phi\;
 m_T\,K_1\!\Bigl(\frac{m_T\cosh\rho}{T_{\rm kin}}\Bigr)\,I_0\!\Bigl(\frac{p_T\sinh\rho}{T_{\rm kin}}\Bigr),
 $$
-其中  
-$$
-m_T = \sqrt{p_T^2 + m^2},\quad
-K_1\text{ 和 }I_0\ \text{为修正贝塞尔函数}.
-$$
+其中 $ m_T = \sqrt{p_T^2 + m^2} $, $ K_1(z) $ 为第二类修正贝塞尔函数，$I_\nu(z)\ (\nu=0,2)$ 为第一类修正贝塞尔函数，分别对应谱和 $v_2$ 中的 $I_0,I_2$.
+
 
 ## 3. 椭圆流系数 $v_2$
 
