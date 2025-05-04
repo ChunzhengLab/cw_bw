@@ -29,5 +29,5 @@ struct Config {
   double fracLBC;
 
   /// Load configuration from a YAML file
-  static Config Load(const std::string &filename);
+  static Config Load(const std::string& filename);
 };
