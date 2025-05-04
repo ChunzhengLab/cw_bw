@@ -103,13 +103,13 @@ int main(int argc, char **argv) {
   // Write parameters to par.log
   {
     std::ofstream parLog("par.log");
-    parLog << "configPath=" << configPath << "\n";
-    parLog << "outputFile=" << outputFile << "\n";
-    parLog << "centrality=" << centralityArg << "\n";
-    parLog << "nEvents=" << cfg.nEvents << "\n";
-    parLog << "ratioProtonLambda=" << cfg.ratioProtonLambda << "\n";
-    parLog << "ratioProtonInclusive=" << cfg.ratioProtonInclusive << "\n";
-    parLog << "fracLBC=" << cfg.fracLBC << "\n";
+    parLog << "configPath : " << configPath << "\n";
+    parLog << "outputFile : " << outputFile << "\n";
+    parLog << "centrality : " << centralityArg << "\n";
+    parLog << "nEvents : " << cfg.nEvents << "\n";
+    parLog << "ratioProtonLambda : " << cfg.ratioProtonLambda << "\n";
+    parLog << "ratioProtonInclusive : " << cfg.ratioProtonInclusive << "\n";
+    parLog << "fracLBC : " << cfg.fracLBC << "\n";
     parLog.close();
   }
 
@@ -120,17 +120,21 @@ int main(int argc, char **argv) {
     cfg.nEvents = nEventsArg;
   }
 
+  // Startup banner
+  std::cout << "==================================================================================\n";
+  std::cout << "         Chunzheng Wang's Blast Wave Model with Local Charge Conservation \n";
+  std::cout << "             Author: Chunzheng Wang (chunzheng.wang@icloud.com) \n";
+  std::cout << "==================================================================================\n";
+
   // === Simulation Parameters ===
-  std::cout << "============================================================\n";
-  std::cout << "bwgen run parameters:\n";
-  std::cout << "  Config file:            " << configPath << "\n";
-  std::cout << "  Output ROOT file:       " << outputFile << "\n";
-  std::cout << "  Centrality:             " << centralityArg << "\n";
-  std::cout << "  Number of events:       " << cfg.nEvents << "\n";
-  std::cout << "  ratioProtonLambda:      " << cfg.ratioProtonLambda << "\n";
-  std::cout << "  ratioProtonInclusive:   " << cfg.ratioProtonInclusive << "\n";
-  std::cout << "  fracLBC:                " << cfg.fracLBC << "\n";
-  std::cout << "============================================================\n";
+  std::cout << ">>>Config file:            " << configPath << "\n";
+  std::cout << ">>>Output ROOT file:       " << outputFile << "\n";
+  std::cout << ">>>Centrality:             " << centralityArg << "\n";
+  std::cout << ">>>Number of events:       " << cfg.nEvents << "\n";
+  std::cout << ">>>ratioProtonLambda:      " << cfg.ratioProtonLambda << "\n";
+  std::cout << ">>>ratioProtonInclusive:   " << cfg.ratioProtonInclusive << "\n";
+  std::cout << ">>>fracLBC:                " << cfg.fracLBC << "\n";
+  std::cout << "==================================================================================\n";
 
   // 3. 实例化事件生成器和分析器
   EventFactory factory(cfg);
@@ -139,7 +143,7 @@ int main(int argc, char **argv) {
 
   // Progress bar
   auto printProgress = [&](unsigned int current) {
-    const unsigned int width = 50;
+    const unsigned int width = 80;
     unsigned int pos = static_cast<unsigned int>(width * current / cfg.nEvents);
     std::cout << "\r[";
     for (unsigned int i = 0; i < width; ++i) {
