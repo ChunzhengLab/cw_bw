@@ -20,8 +20,8 @@ args = parser.parse_args()
 # Define centralities and corresponding event counts
 # centralities = [55, 45, 35, 25, 15]
 # events = [500000, 300000, 150000, 100000, 50000]
-centralities = [45, 35]
-events = [500000, 200000]
+centralities = [45]
+events = [500000]
 # centralities = [25, 35]
 # events = [100000, 200000]
 
