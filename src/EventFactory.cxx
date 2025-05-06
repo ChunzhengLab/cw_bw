@@ -140,16 +140,11 @@ void EventFactory::BuildParticles(Event& evt) {
     if (dist01_(rng_) < cfg_.fracLBC[bin]) {
       int sn_friend = ++nextSN;
       int pid_friend;
-      if (pid == 2212)
-        pid_friend = -3122;
-      else if (pid == -2212)
-        pid_friend = 3122;
-      else if (pid == 3122)
-        pid_friend = -2212;
-      else if (pid == -3122)
-        pid_friend = 2212;
-      else
-        pid_friend = -pid;
+      if (pid == 2212)       pid_friend = -3122;
+      else if (pid == -2212) pid_friend =  3122;
+      else if (pid == 3122)  pid_friend = -2212;
+      else if (pid == -3122) pid_friend =  2212;
+      else pid_friend = -pid;
 
       double E_friend = SampleEnergy(bin, pid_friend);
       double p_star_friend = std::sqrt(E_friend * E_friend - mass * mass);
@@ -195,8 +190,8 @@ TVector3 EventFactory::GetLocalBoostVector(float x, float y, int bin, int pid) c
   // normalized radius in ellipse
   double r_norm = std::hypot(x / Rx, y / Ry);
   // emission angle in ellipse coordinate
-  // double phi_s = std::atan2(y, x); // suggested by Wan Jie
-  double phi_s = std::atan2(y / Ry, x / Rx);
+  double phi_s = std::atan2(y, x); // SUGGESTED by WAN JIE Thanks!
+  // double phi_s = std::atan2(y / Ry, x / Rx);
 
   // flow rapidity parameters
   double rho0 = std::atanh(cfg_.betaT[bin]);

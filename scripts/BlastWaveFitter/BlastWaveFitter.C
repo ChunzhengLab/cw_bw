@@ -76,11 +76,11 @@ struct BWParams {
   int bessel_order;  // 0 for spectrum, 2 for v2 numerator
 };
 
-static double bw_integrand(double r, double phi_s, void* vp) {
+static double bw_integrand(double r, double phi_hat, void* vp) {
   auto* p = static_cast<BWParams*>(vp);
   double pT = p->pT, m = p->mass, T = p->Tkin, betaT = p->betaT, n = p->n_flow, rho2 = p->rho2, Rx = p->Rx, Ry = p->Ry;
-  // Compute boost angle phi_b from phi_s
-  double phi_b = std::atan2(Rx * Rx * std::sin(phi_s), Ry * Ry * std::cos(phi_s));
+  // Compute boost angle phi_b from phi_hat
+  double phi_b = std::atan2(Rx * std::sin(phi_hat), Ry * std::cos(phi_hat));
   // radial profile in terms of transverse rapidity (exact)
   double rho0 = std::atanh(betaT);                                    // outer-edge rapidity
   double rho = std::pow(r, n) * (rho0 + rho2 * std::cos(2 * phi_b));  // Eq. (7) with optional power n
@@ -109,8 +109,8 @@ double BW_Spectrum(double pT, double mass, double Tkin, double betaT, double n_f
   // For fixed-node Gauss-Legendre, tolerance refers to internal convergence.
   double sum = 0;
   for (int i = 0; i < Nphi; ++i) {
-    double phi_s = 2 * M_PI * i / Nphi;
-    std::function<double(double)> ffun = [=, &params](double r) { return bw_integrand(r, phi_s, &params); };
+    double phi_hat = 2 * M_PI * i / Nphi;
+    std::function<double(double)> ffun = [=, &params](double r) { return bw_integrand(r, phi_hat, &params); };
     ig.SetFunction(ffun);
     sum += ig.Integral(0, 1.0);
   }
@@ -125,11 +125,11 @@ double BW_v2shape(double pT, double mass, double Tkin, double betaT, double n_fl
   ig.SetAbsTolerance(1e-6);
   double sum0 = 0, sum2 = 0;
   for (int i = 0; i < Nphi; ++i) {
-    double phi_s = 2 * M_PI * i / Nphi;
-    std::function<double(double)> ffun0 = [=, &p0](double r) { return bw_integrand(r, phi_s, &p0); };
+    double phi_hat = 2 * M_PI * i / Nphi;
+    std::function<double(double)> ffun0 = [=, &p0](double r) { return bw_integrand(r, phi_hat, &p0); };
     ig.SetFunction(ffun0);
     sum0 += ig.Integral(0, 1.0);
-    std::function<double(double)> ffun2 = [=, &p2](double r) { return bw_integrand(r, phi_s, &p2); };
+    std::function<double(double)> ffun2 = [=, &p2](double r) { return bw_integrand(r, phi_hat, &p2); };
     ig.SetFunction(ffun2);
     sum2 += ig.Integral(0, 1.0);
   }
