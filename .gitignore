@@ -27,6 +27,7 @@ G__*.h
 .DS_Store
 .vscode/
 .idea/
+.envrc
 
 # === Log and debug files ===
 *.log
@@ -36,5 +37,6 @@ core.*
 valgrind*.txt
 *.pdf
 *.csv
+!refdata/cve_alice_preliminary.csv
 *.cache
 *.ropeproject

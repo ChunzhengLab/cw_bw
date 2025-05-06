@@ -71,8 +71,8 @@ void AnalyzerCVE::Init() {
   h_pt_proton = new TH1D("h_pt_proton", "p_{T} proton; p_{T} (GeV/c); Counts", 100, 0, 10);
   h_eta_lambda = new TH1D("h_eta_lambda", "#eta #Lambda; #eta; Counts", 50, -1.0, 1.0);
   h_eta_proton = new TH1D("h_eta_proton", "#eta proton; #eta; Counts", 50, -1.0, 1.0);
-  h_phi_lambda = new TH1D("h_phi_lambda", "#phi #Lambda; #phi; Counts", 64, -M_PI, M_PI);
-  h_phi_proton = new TH1D("h_phi_proton", "#phi proton; #phi; Counts", 64, -M_PI, M_PI);
+  h_phi_lambda = new TH1D("h_phi_lambda", "#phi #Lambda; #phi; Counts", 64, 0, 2 * M_PI);
+  h_phi_proton = new TH1D("h_phi_proton", "#phi proton; #phi; Counts", 64, 0, 2 * M_PI);
 
   // v2 TProfiles vs pT
   p_v2_pt_lambda = new TProfile("p_v2_pt_lambda", "v_{2} vs p_{T} #Lambda; p_{T} (GeV/c); v_{2}", 100, 0, 10);
@@ -176,6 +176,7 @@ void AnalyzerCVE::Process(const Event& evt) {
     float pt = p.Pt();
     float eta = p.Eta();
     float phi = p.Phi();
+    if (phi < 0) phi += 2 * M_PI;
     if (pt < 0.2f || pt > 5.0f || std::fabs(eta) > 0.8f) continue;
 
     if (pid == 3122) {
@@ -225,13 +226,26 @@ void AnalyzerCVE::Process(const Event& evt) {
       p_gamma.at(key)->Fill(centrality, gamma);
       p_delta.at(key)->Fill(centrality, delta);
       // compute bins
-      int etaBin = (eta_gap < 0.5f) ? 0 : (eta_gap < 1.0f) ? 1 : (eta_gap < 1.5f) ? 2 : 3;
-      int sumBin = (sumPt < 5.0f) ? 0 : (sumPt < 10.0f) ? 1 : 2;
+      int etaGapBin{-1};
+      if (eta_gap > 0.8f) etaGapBin = 3;
+      else if (eta_gap > 0.6f) etaGapBin = 2;
+      else if (eta_gap > 0.4f) etaGapBin = 1;
+      else if (eta_gap > 0.2f) etaGapBin = 0;
+
+      int sumPtBin{-1};
+      if (sumPt > 5.0f && sumPt <= 8.0f) sumPtBin = 2;
+      else if (sumPt > 3.0f && sumPt <= 5.0f) sumPtBin = 1;
+      else if (sumPt > 1.0f && sumPt <= 3.0f) sumPtBin = 0;
+
       // differential fills
-      p_delta_sumPt[sumBin].at(key)->Fill(centrality, delta);
-      p_gamma_sumPt[sumBin].at(key)->Fill(centrality, gamma);
-      p_delta_etaGap[etaBin].at(key)->Fill(centrality, delta);
-      p_gamma_etaGap[etaBin].at(key)->Fill(centrality, gamma);
+      if (sumPtBin > -1) {
+        p_delta_sumPt[sumPtBin].at(key)->Fill(centrality, delta);
+        p_gamma_sumPt[sumPtBin].at(key)->Fill(centrality, gamma);
+      }
+      if (etaGapBin > -1) {
+        p_delta_etaGap[etaGapBin].at(key)->Fill(centrality, delta);
+        p_gamma_etaGap[etaGapBin].at(key)->Fill(centrality, gamma);
+      }
       // this-cent fills
       p_delta_vs_sumPt.at(key)->Fill(sumPt, delta);
       p_gamma_vs_sumPt.at(key)->Fill(sumPt, gamma);

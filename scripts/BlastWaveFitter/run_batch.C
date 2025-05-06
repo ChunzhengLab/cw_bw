@@ -27,7 +27,7 @@ void run(const char* centCode = "2030") {
   // 编译并载入拟合器（只做一次）
   // gROOT->ProcessLine(".L BlastWaveFitter.C+");
 
-  // 小工具：安全取图
+  // 取图
   auto fetch = [](TFile* f, const std::string& name) -> TGraphAsymmErrors* {
     return f ? dynamic_cast<TGraphAsymmErrors*>(f->Get(name.c_str())) : nullptr;
   };

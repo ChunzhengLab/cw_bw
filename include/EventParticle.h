@@ -21,6 +21,12 @@ class Particle {
   inline double Pt() const {
     return momentum_.Pt();
   }
+  inline double Px() const {
+    return momentum_.Px();
+  }
+  inline double Py() const {
+    return momentum_.Py();
+  }
   inline double Eta() const {
     return momentum_.PseudoRapidity();
   }

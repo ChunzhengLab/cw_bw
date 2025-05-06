@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <iomanip>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -24,7 +23,7 @@ using std::endl;
 //     root -l -q PrepareLambdaSpectra.C
 //     root -l -q 'PrepareLambdaSpectra.C("mySpectra.root")'
 // -----------------------------------------------------------------------------
-void PrepareLambdaSpectra(const char* filename = "spec_v2.root") {
+void PrepareLambdaSpectra(const char* filename = "../../refdata/spec_v2.root") {
   gStyle->SetOptStat(0);
 
   // --------------------------------------------------------------------------

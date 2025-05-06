@@ -19,9 +19,10 @@ n:      [0.483535, 0.507042, 0.335976, 0.40257, 0.457789]
 rho2_p: [0.0649459, 0.0926934, 0.108133, 0.12029, 0.128153]
 rho2_L: [0.0701394, 0.0880093, 0.101918, 0.0977812, 0.106739]
 Rx:     [9.15428, 8.82537, 8.64939, 8.50408, 8.4295]
+fracLBC: [0.082, 0.079, 0.080, 0.076, 0.090] # stupid value get by hand, this is for sure a suck method
+# fracLBC: [0.0775, 0.0787, 0.0795, 0.0719, 0.0887] # from Δδ pol3 fit
+#fracLBC [0.0491, 0.0534, 0.0581, 0.0523, 0.0851] # from Δγ
 
-
-# Particle ratio & debug
+# Particle ratio
 ratioProtonLambda: 1.5
 ratioProtonInclusive: 0.0416667
-fracLBC: 0.03 #TODO

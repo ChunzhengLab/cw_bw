@@ -26,7 +26,7 @@ struct Config {
   // Particle ratio & debug flag
   double ratioProtonLambda;
   double ratioProtonInclusive;
-  double fracLBC;
+  std::vector<double> fracLBC;
 
   /// Load configuration from a YAML file
   static Config Load(const std::string& filename);

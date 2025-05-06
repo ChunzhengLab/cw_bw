@@ -22,11 +22,10 @@ CSV Format:
 
 import ROOT
 import csv
-import os
 
 # Load mapping from CSV
 csv_path = "graph_mapping.csv"  # Adjust path as needed
-output = ROOT.TFile("spec_lambda_infered.root", "RECREATE")
+output = ROOT.TFile("../../refdata/spec_lambda_infered.root", "RECREATE")
 
 with open(csv_path, newline='') as csvfile:
     reader = csv.DictReader(csvfile)
