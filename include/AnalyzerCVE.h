@@ -62,6 +62,9 @@ class AnalyzerCVE {
   ProfileMap p_gamma;
   ProfileMap p_delta;
 
+  ProfileMap p_gamma_LBCFriend;
+  ProfileMap p_delta_LBCFriend;
+
   // Differential by sumPt (3 bins)
   ProfileMap p_delta_sumPt[3];
   ProfileMap p_gamma_sumPt[3];

@@ -48,6 +48,10 @@ AnalyzerCVE::~AnalyzerCVE() {
   // Delete coarse centrality maps
   for (auto& kv : p_gamma) delete kv.second;
   for (auto& kv : p_delta) delete kv.second;
+
+  for (auto& kv : p_gamma_LBCFriend) delete kv.second;
+  for (auto& kv : p_delta_LBCFriend) delete kv.second;
+
   // Delete differential sumPt maps
   for (int b = 0; b < 3; ++b) {
     for (auto& kv : p_delta_sumPt[b]) delete kv.second;
@@ -111,11 +115,13 @@ void AnalyzerCVE::Init() {
       {
         TString name = Form("p_gamma_%s_%s", pidName(pid1Sorted), pidName(pid2Sorted));
         p_gamma[key] = new TProfile(name, name, 10, 0, 100);
+        p_gamma_LBCFriend[key] = new TProfile(name + "_LBCFriend", name+"_LBCFriend", 10, 0, 100);
       }
       // delta profile vs centrality
       {
         TString name = Form("p_delta_%s_%s", pidName(pid1Sorted), pidName(pid2Sorted));
         p_delta[key] = new TProfile(name, name, 10, 0, 100);
+        p_delta_LBCFriend[key] = new TProfile(name + "_LBCFriend", name+"_LBCFriend", 10, 0, 100);
       }
     }
   }
@@ -225,6 +231,10 @@ void AnalyzerCVE::Process(const Event& evt) {
       // coarse centrality
       p_gamma.at(key)->Fill(centrality, gamma);
       p_delta.at(key)->Fill(centrality, delta);
+      if (p1.GetSerialNumberLBCFriend() == p2.GetSerialNumber() || p2.GetSerialNumberLBCFriend() == p1.GetSerialNumber()) {
+          p_gamma_LBCFriend.at(key)->Fill(centrality,gamma);
+          p_delta_LBCFriend.at(key)->Fill(centrality,delta);
+      }
       // compute bins
       int etaGapBin{-1};
       if (eta_gap > 0.8f) etaGapBin = 3;
@@ -286,6 +296,10 @@ void AnalyzerCVE::Write(const std::string& filename) const {
   // Write coarse centrality profiles
   for (auto& kv : p_gamma) kv.second->Write();
   for (auto& kv : p_delta) kv.second->Write();
+
+  for (auto& kv : p_gamma_LBCFriend) kv.second->Write();
+  for (auto& kv : p_delta_LBCFriend) kv.second->Write();
+
   // Write differential sumPt profiles
   for (int b = 0; b < 3; ++b)
     for (auto& kv : p_delta_sumPt[b]) kv.second->Write();
