@@ -5,15 +5,20 @@
 #include <string>
 #include <vector>
 
-#include "Minuit2/FCNBase.h"
-#include "Minuit2/Minuit2Minimizer.h"
-#include "Minuit2/MnMigrad.h"
-#include "Minuit2/MnUserParameters.h"
 #include "TCanvas.h"
 #include "TColor.h"
 #include "TF1.h"
 #include "TGraphAsymmErrors.h"
 #include "TLegend.h"
+
+#include "Math/Integrator.h"
+#include "Math/SpecFuncMathMore.h"
+
+#include "Minuit2/FCNBase.h"
+#include "Minuit2/Minuit2Minimizer.h"
+#include "Minuit2/MnMigrad.h"
+#include "Minuit2/MnUserParameters.h"
+#include "Minuit2/FunctionMinimum.h"
 
 // ---- Output-file control ---------------------------------
 static std::string gSaveName = "BlastWaveFit.pdf";
@@ -217,7 +222,7 @@ void BlastWaveFitter() {
 
   MnUserParameters params;
   params.Add("betaT", 0.6, 0.01, 0.2, 0.9);    // 上限设为0.999避免atanh溢出
-  params.Add("Tkin", 0.13, 0.005, 0.01, 0.5);  // 温度下限
+  params.Add("Tkin", 0.13, 0.005, 0.01, 0.16);  // 温度下限
   params.Add("n_flow", 0.5, 0.1, 0.0, 10.0);   // 非负
   params.Add("rho2_p", 0.0, 0.01, 0.0, 0.5);
   params.Add("rho2_L", 0.0, 0.01, 0.0, 0.5);

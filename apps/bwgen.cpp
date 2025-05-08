@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
 
   // Startup banner
   std::cout << "==================================================================================\n";
-  std::cout << "         Chunzheng Wang's Blast Wave Model with Local Charge Conservation \n";
+  std::cout << "     Chunzheng Wang's Blast Wave Model with Local Baryon Number Conservation \n";
   std::cout << "             Author: Chunzheng Wang (chunzheng.wang@icloud.com) \n";
   std::cout << "==================================================================================\n";
 

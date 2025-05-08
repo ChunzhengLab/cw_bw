@@ -36,7 +36,5 @@ G__*.h
 core.*
 valgrind*.txt
 *.pdf
-*.csv
-!refdata/cve_alice_preliminary.csv
 *.cache
 *.ropeproject

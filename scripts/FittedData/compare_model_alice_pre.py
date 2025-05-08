@@ -29,6 +29,7 @@ import math
 import glob
 import os
 import re
+import argparse
 
 ROOT.gROOT.SetBatch(True)
 DEBUG = True  # set to False to silence debug prints
@@ -85,7 +86,8 @@ def read_alice_preliminary(csv_path):
 # ----------------------------------------------------------------------
 # 2) Model ROOT files
 # ----------------------------------------------------------------------
-def process_root_files(pattern: str = "./results_cent*_fLBC*.root"):
+def process_root_files(root_dir: str):
+    pattern = os.path.join(root_dir, "results_cent*_fLBC*.root")
     files  = glob.glob(pattern)
     if DEBUG:
         print(f"[DEBUG] Found {len(files)} ROOT files matching pattern '{pattern}'")
@@ -239,7 +241,7 @@ def plot_comparison(al_cent, al_dD, al_dDE, al_dG, al_dGE, model):
 
     mg_dD.Draw("A P")
     mg_dD.GetHistogram().GetXaxis().SetLimits(0, 60)
-    mg_dD.GetHistogram().GetYaxis().SetRangeUser(-0.0002, 0.015)
+    mg_dD.GetHistogram().GetYaxis().SetRangeUser(-0.002, 0.015)
     mg_dD.GetXaxis().SetTitle("Centrality (%)")
     mg_dD.GetYaxis().SetTitle("#delta#delta")
     leg1.Draw()
@@ -260,7 +262,7 @@ def plot_comparison(al_cent, al_dD, al_dDE, al_dG, al_dGE, model):
 
     mg_dG.Draw("A P")
     mg_dG.GetHistogram().GetXaxis().SetLimits(0, 60)
-    mg_dG.GetHistogram().GetYaxis().SetRangeUser(-0.00003, 0.003)
+    mg_dG.GetHistogram().GetYaxis().SetRangeUser(-0.0003, 0.003)
     mg_dG.GetXaxis().SetTitle("Centrality (%)")
     mg_dG.GetYaxis().SetTitle("#delta#gamma")
     leg2.Draw()
@@ -341,7 +343,7 @@ def plot_dDeltaGamma_vs_fLBC(model, al_cent, al_dD, al_dDE, al_dG, al_dGE, filen
 
 
     mg_dD.Draw("A LP")
-    mg_dD.GetHistogram().GetYaxis().SetRangeUser(-0.0002, 0.015)
+    mg_dD.GetHistogram().GetYaxis().SetRangeUser(-0.002, 0.015)
     mg_dD.GetHistogram().GetXaxis().SetTitle("f_{LBC}")
     mg_dD.GetHistogram().GetYaxis().SetTitle("#Delta#delta")
     leg1.Draw()
@@ -389,8 +391,8 @@ def plot_dDeltaGamma_vs_fLBC(model, al_cent, al_dD, al_dDE, al_dG, al_dGE, filen
             tm2.Draw()
 
 
-    mg_dG.Draw("A LP")
-    mg_dG.GetHistogram().GetYaxis().SetRangeUser(-0.00003, 0.003)
+    mg_dG.Draw("SAME LP")
+    mg_dG.GetHistogram().GetYaxis().SetRangeUser(-0.001, 0.003)
     mg_dG.GetHistogram().GetXaxis().SetTitle("f_{LBC}")
     mg_dG.GetHistogram().GetYaxis().SetTitle("#Delta#gamma")
     leg2.Draw()
@@ -407,16 +409,32 @@ def plot_dDeltaGamma_vs_fLBC(model, al_cent, al_dD, al_dDE, al_dG, al_dGE, filen
 
 
 # ----------------------------------------------------------------------
-# 5) Main
+# 5) Argument parsing
+# ----------------------------------------------------------------------
+def parse_args():
+    parser = argparse.ArgumentParser(description="Compare ALICE preliminary data with model outputs.")
+    parser.add_argument("--root-dir", default=".", help="Directory containing ROOT files.")
+    parser.add_argument("--csv-alice", default="../../refdata/cve_alice_preliminary.csv", help="CSV file path for ALICE preliminary data.")
+    parser.add_argument("--output-dir", default=".", help="Directory to save output plots.")
+    return parser.parse_args()
+
+
+# ----------------------------------------------------------------------
+# 6) Main
 # ----------------------------------------------------------------------
 def main():
-    csv_file = "../../refdata/cve_alice_preliminary.csv"
-    alice = read_alice_preliminary(csv_file)
-    model = process_root_files()
-    plot_comparison(*alice, model)
+    args = parse_args()
+    alice = read_alice_preliminary(args.csv_alice)
+    model = process_root_files(args.root_dir)
 
-    # Additional plot: dDelta and dGamma vs fLBC in one canvas
-    plot_dDeltaGamma_vs_fLBC(model, *alice, "dDelta_dGamma_vs_fLBC.pdf")
+    os.makedirs(args.output_dir, exist_ok=True)
+    comparison_plot = os.path.join(args.output_dir, "deltaDelta_deltaGamma_comparison.pdf")
+    flbc_plot = os.path.join(args.output_dir, "dDelta_dGamma_vs_fLBC.pdf")
+
+    plot_comparison(*alice, model)
+    os.rename("deltaDelta_deltaGamma_comparison.pdf", comparison_plot)
+
+    plot_dDeltaGamma_vs_fLBC(model, *alice, flbc_plot)
 
 
 if __name__ == "__main__":

@@ -11,17 +11,17 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Parallel bwgen runner")
 parser.add_argument(
-    "-c", "--config",
+    "--yaml",
     help="Configuration YAML file",
     default="../../configs/default.yaml"
 )
 args = parser.parse_args()
 
 # Define centralities and corresponding event counts
-# centralities = [55, 45, 35, 25, 15]
-# events = [500000, 300000, 150000, 100000, 50000]
-centralities = [45]
-events = [500000]
+centralities = [55, 45, 35, 25, 15]
+events = [500000, 300000, 150000, 100000, 50000]
+# centralities = [45]
+# events = [500000]
 # centralities = [25, 35]
 # events = [100000, 200000]
 
@@ -30,8 +30,8 @@ bwgen = '../../build/bwgen'
 
 # Worker function
 def run_bwgen(cent, n):
-    cmd = [bwgen, '-C', str(cent), '-n', str(n), '-c', args.config]
-    print(f"Starting bwgen for centrality={cent}, events={n} with config={args.config}")
+    cmd = [bwgen, '-C', str(cent), '-n', str(n), '-c', args.yaml]
+    print(f"Starting bwgen for centrality={cent}, events={n} with config={args.yaml}")
     try:
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)
         print(f"Completed bwgen for centrality={cent}:\n{result.stdout}")

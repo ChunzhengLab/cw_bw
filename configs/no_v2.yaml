@@ -1,0 +1,26 @@
+# Simulation configuration for cw_bw
+
+# General simulation settings
+nEvents: 3000
+
+# 10-20%, 20-30%, 30-40%, 40-50%, 50-60%, 60-70%
+# Negative Binomial distribution parameters
+mu5TeV:   [1852, 1340, 901, 603.3, 369.5]
+NBDSigma: [300, 180, 124, 87, 63]
+NBDLow:   [1300, 900, 500, 400, 300]
+NBDHigh:  [5000, 3000, 2000, 1200, 1000]
+KinCutRatio: [0.43209614, 0.431945, 0.428783, 0.4336, 0.428906]
+
+# Kinetic freeze-out temperature per centrality bin
+Tkin:   [0.137922, 0.134073, 0.131303, 0.164585, 0.163272]
+# Blast-Wave flow parameters
+betaT:  [0.866228, 0.864216, 0.860267, 0.803845, 0.798414]
+n:      [0.483652, 0.507042, 0.548242, 0.333257, 0.42311]
+rho2_p: [0,0,0,0,0]  #no rho2
+rho2_L: [0,0,0,0,0]  #no rho2
+Rx:     [10,10,10,10,10] #round source
+fracLBC: [0.082, 0.079, 0.079, 0.074, 0.090] # stupid value get by hand, this is for sure a sucked method
+
+# Particle ratio
+ratioProtonLambda: 1.5
+ratioProtonInclusive: 0.0416667

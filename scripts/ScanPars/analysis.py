@@ -9,7 +9,7 @@ Usage:
 
 Options:
     -r, --root-dir      Directory containing ROOT files matching
-                        results_cent<cent>_fLBC<...>_rho2scale<rho>_betascale<beta>.root
+                        results_cent<cent>_fLBC<...>[_rho2scale<rho>][_betascale<beta>].root
     -c, --config-yaml   Path to default.yaml with betaT, rho2_p, rho2_L arrays
     -o, --output-csv    Filename for the generated CSV report
 """
@@ -57,9 +57,11 @@ def main():
     # Map centrality suffix to index in arrays
     cent_to_index = {'15': 0, '25': 1, '35': 2, '45': 3, '55': 4}
 
-    # Regex to parse filenames
+    # Regex to parse filenames with required fLBC and optional scales
     pattern = re.compile(
-        r'results_cent(?P<cent>\d+)_fLBC(?P<fLBC>[\d.]+)_rho2scale(?P<rho2scale>[\d.]+)_betascale(?P<betascale>[\d.]+)\.root'
+        r'results_cent(?P<cent>\d+)_fLBC(?P<fLBC>[\d.]+)'
+        r'(?:_rho2scale(?P<rho2scale>[\d.]+))?'
+        r'(?:_betascale(?P<betascale>[\d.]+))?\.root$'
     )
 
     rows = []
@@ -75,8 +77,9 @@ def main():
 
         idx        = cent_to_index[cent_str]
         centrality = int(cent_str)
-        betaScale  = float(m.group('betascale'))
-        rho2Scale  = float(m.group('rho2scale'))
+        fLBC       = float(m.group('fLBC'))
+        betaScale  = float(m.group('betascale') or 1.0)
+        rho2Scale  = float(m.group('rho2scale') or 1.0)
 
         # Raw parameters from YAML
         raw_betaT  = betaT_array[idx]
@@ -116,25 +119,19 @@ def main():
         # Compute SS, OS, and difference histograms
         results = {}
         for obs in observables:
-            # Same-sign: antilambda_antiproton + proton_lambda
             p_ss = profiles[f"p_{obs}_antilambda_antiproton"].Clone(f"p_{obs}_SS")
             p_ss.Add(profiles[f"p_{obs}_proton_lambda"])
-            # Opposite-sign: antilambda_proton + antiproton_lambda
             p_os = profiles[f"p_{obs}_antilambda_proton"].Clone(f"p_{obs}_OS")
             p_os.Add(profiles[f"p_{obs}_antiproton_lambda"])
-            # Project to TH1D
             h_ss   = p_ss.ProjectionX(f"h_{obs}_SS")
             h_os   = p_os.ProjectionX(f"h_{obs}_OS")
-            # Difference histogram: OS - SS
             h_diff = h_os.Clone(f"h_{obs}_diff")
             h_diff.Add(h_ss, -1)
 
-            # Find the bin corresponding to the centrality value
             bin_ss   = h_ss.FindBin(centrality)
             bin_os   = h_os.FindBin(centrality)
             bin_diff = h_diff.FindBin(centrality)
 
-            # Extract contents and errors
             content_ss, err_ss   = h_ss.GetBinContent(bin_ss),   h_ss.GetBinError(bin_ss)
             content_os, err_os   = h_os.GetBinContent(bin_os),   h_os.GetBinError(bin_os)
             content_d,  err_d    = h_diff.GetBinContent(bin_diff), h_diff.GetBinError(bin_diff)
@@ -161,43 +158,57 @@ def main():
         results["v2_p"] = (v2_p_mean, v2_p_err)
         results["v2_L"] = (v2_L_mean, v2_L_err)
 
+        # Compute combined v2
+        v2_comb, v2_comb_err = (0, 0)
+        if prof_v2_p and prof_v2_L:
+            prof_v2_sum = prof_v2_p.Clone("p_v2_sum")
+            prof_v2_sum.Add(prof_v2_L)
+            v2_comb = prof_v2_sum.GetMean(2)
+            v2_comb_err = prof_v2_sum.GetMeanError(2)
+        else:
+            print(f"Warning: Cannot compute combined v2 for {fname}")
+        results["v2"]      = (v2_comb, v2_comb_err)
+
         f.Close()
 
         # Assemble row
         row = {
-            'centrality':      centrality,
-            'betaScale':       betaScale,
-            'betaT':           betaT,
-            'rho2Scale':       rho2Scale,
-            'rho2_L':          rho2_L,
-            'rho2_p':          rho2_p,
-            'DeltaSS':         results['DELTASS'][0],
-            'DeltaSS_Err':     results['DELTASS'][1],
-            'DeltaOS':         results['DELTAOS'][0],
-            'DeltaOS_Err':     results['DELTAOS'][1],
-            'GammaSS':         results['GAMMASS'][0],
-            'GammaSS_Err':     results['GAMMASS'][1],
-            'GammaOS':         results['GAMMAOS'][0],
-            'GammaOS_Err':     results['GAMMAOS'][1],
-            'DelDelta':        results['DelDelta'][0],
-            'DelDelta_Err':    results['DelDelta'][1],
-            'DelGamma':        results['DelGamma'][0],
-            'DelGamma_Err':    results['DelGamma'][1],
-            'v2_p': results['v2_p'][0],
-            'v2_p_Err': results['v2_p'][1],
-            'v2_L': results['v2_L'][0],
-            'v2_L_Err': results['v2_L'][1],
+            'centrality':   centrality,
+            'fLBC':         fLBC,
+            'betaScale':    betaScale,
+            'betaT':        betaT,
+            'rho2Scale':    rho2Scale,
+            'rho2_L':       rho2_L,
+            'rho2_p':       rho2_p,
+            'DeltaSS':      results['DELTASS'][0],
+            'DeltaSS_Err':  results['DELTASS'][1],
+            'DeltaOS':      results['DELTAOS'][0],
+            'DeltaOS_Err':  results['DELTAOS'][1],
+            'GammaSS':      results['GAMMASS'][0],
+            'GammaSS_Err':  results['GAMMASS'][1],
+            'GammaOS':      results['GAMMAOS'][0],
+            'GammaOS_Err':  results['GAMMAOS'][1],
+            'DelDelta':     results['DelDelta'][0],
+            'DelDelta_Err': results['DelDelta'][1],
+            'DelGamma':     results['DelGamma'][0],
+            'DelGamma_Err': results['DelGamma'][1],
+            'v2_p':         results['v2_p'][0],
+            'v2_p_Err':     results['v2_p'][1],
+            'v2_L':         results['v2_L'][0],
+            'v2_L_Err':     results['v2_L'][1],
+            'v2':           results['v2'][0],
+            'v2_Err':       results['v2'][1],
         }
         rows.append(row)
 
     # Write CSV
     import csv
     headers = [
-        'centrality','betaScale','betaT','rho2Scale','rho2_L','rho2_p',
+        'centrality','fLBC','betaScale','betaT','rho2Scale','rho2_L','rho2_p',
         'DeltaSS','DeltaSS_Err','DeltaOS','DeltaOS_Err',
         'GammaSS','GammaSS_Err','GammaOS','GammaOS_Err',
         'DelDelta','DelDelta_Err','DelGamma','DelGamma_Err',
-        'v2_p','v2_p_Err','v2_L','v2_L_Err',
+        'v2_p','v2_p_Err','v2_L','v2_L_Err','v2','v2_Err'
     ]
     with open(output_csv, 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=headers)

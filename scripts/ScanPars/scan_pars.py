@@ -23,7 +23,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="FracLBC values (0 to 0.16) to scan, comma-separated"
     )
-    parser.add_argument("-j", "--jobs", type=int, default=6, help="Number of parallel jobs")
+    parser.add_argument("-j", "--jobs", type=int, default=8, help="Number of parallel jobs")
     parser.add_argument("--dry", action="store_true", help="Print commands only")
     parser.add_argument(
         "--mode",

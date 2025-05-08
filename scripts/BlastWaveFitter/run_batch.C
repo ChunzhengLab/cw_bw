@@ -16,9 +16,10 @@
 #include <string>
 #include <vector>
 
-#include "BlastWaveFitter.C"
 #include "TFile.h"
 #include "TGraphAsymmErrors.h"
+
+#include "BlastWaveFitter.C"
 
 extern void SetSaveName(const char*);
 extern void SetCentralityLabel(const char*);
