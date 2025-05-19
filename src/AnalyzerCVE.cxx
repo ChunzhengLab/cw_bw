@@ -227,15 +227,22 @@ void AnalyzerCVE::Process(const Event& evt) {
       p_delta.at(key)->Fill(centrality, delta);
       // compute bins
       int etaGapBin{-1};
-      if (eta_gap > 0.8f) etaGapBin = 3;
-      else if (eta_gap > 0.6f) etaGapBin = 2;
-      else if (eta_gap > 0.4f) etaGapBin = 1;
-      else if (eta_gap > 0.2f) etaGapBin = 0;
+      if (eta_gap > 0.8f)
+        etaGapBin = 3;
+      else if (eta_gap > 0.6f)
+        etaGapBin = 2;
+      else if (eta_gap > 0.4f)
+        etaGapBin = 1;
+      else if (eta_gap > 0.2f)
+        etaGapBin = 0;
 
       int sumPtBin{-1};
-      if (sumPt > 5.0f && sumPt <= 8.0f) sumPtBin = 2;
-      else if (sumPt > 3.0f && sumPt <= 5.0f) sumPtBin = 1;
-      else if (sumPt > 1.0f && sumPt <= 3.0f) sumPtBin = 0;
+      if (sumPt > 5.0f && sumPt <= 8.0f)
+        sumPtBin = 2;
+      else if (sumPt > 3.0f && sumPt <= 5.0f)
+        sumPtBin = 1;
+      else if (sumPt > 1.0f && sumPt <= 3.0f)
+        sumPtBin = 0;
 
       // differential fills
       if (sumPtBin > -1) {

@@ -13,16 +13,18 @@ KinCutRatio: [0.43209614, 0.431945, 0.428783, 0.4336, 0.428906]
 
 # Kinetic freeze-out temperature per centrality bin
 Tkin:   [0.137922, 0.134073, 0.131303, 0.164585, 0.163272]
+TkinSigma: [0.0,0.0,0.0,0.0,0.0]
 # Blast-Wave flow parameters
 betaT:  [0.866228, 0.864216, 0.860267, 0.803845, 0.798414]
+betaTSigma: [0.002,0.002,0.002,0.002,0.002]
 n:      [0.483652, 0.507042, 0.548242, 0.333257, 0.42311]
 rho2_p: [0.0649528, 0.0927472, 0.116661, 0.119152, 0.129067]
-rho2_L: [0.0701475, 0.088043, 0.1068, 0.0969142, 0.108739]
+rho2_pion: [0.0701475, 0.088043, 0.1068, 0.0969142, 0.108739]
+rho2_kaon: [0.0701475, 0.088043, 0.1068, 0.0969142, 0.108739]
 Rx:     [8.37998, 7.78801, 7.34078, 7.26074, 7.11325]
-fracLBC: [0.082, 0.079, 0.079, 0.074, 0.090] # stupid value get by hand, this is for sure a sucked method
 # fracLBC: [0.0775, 0.0787, 0.0795, 0.0719, 0.0887] # from Δδ pol3 fit
 #fracLBC [0.0491, 0.0534, 0.0581, 0.0523, 0.0851] # from Δγ
 
 # Particle ratio
-ratioProtonLambda: 1.5
-ratioProtonInclusive: 0.0416667
+ratioProtonPion: 0.05
+ratioKaonPion: 0.14

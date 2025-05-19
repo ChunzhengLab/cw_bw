@@ -31,8 +31,16 @@ Config Config::Load(const std::string& filename) {
   if (!config["Tkin"]) throw std::runtime_error("Config::Load(" + filename + "): Missing required node: Tkin");
   for (const auto& val : config["Tkin"]) cfg.Tkin.push_back(val.as<double>());
 
+  if (!config["TkinSigma"])
+    throw std::runtime_error("Config::Load(" + filename + "): Missing required node: TkinSigma");
+  for (const auto& val : config["TkinSigma"]) cfg.TkinSigma.push_back(val.as<double>());
+
   if (!config["betaT"]) throw std::runtime_error("Config::Load(" + filename + "): Missing required node: betaT");
   for (const auto& val : config["betaT"]) cfg.betaT.push_back(val.as<double>());
+
+  if (!config["betaTSigma"])
+    throw std::runtime_error("Config::Load(" + filename + "): Missing required node: betaTSigma");
+  for (const auto& val : config["betaTSigma"]) cfg.betaTSigma.push_back(val.as<double>());
 
   if (!config["n"]) throw std::runtime_error("Config::Load(" + filename + "): Missing required node: n");
   for (const auto& val : config["n"]) cfg.n.push_back(val.as<double>());
@@ -40,25 +48,25 @@ Config Config::Load(const std::string& filename) {
   if (!config["rho2_p"]) throw std::runtime_error("Config::Load(" + filename + "): Missing required node: rho2_p");
   for (const auto& val : config["rho2_p"]) cfg.rho2_p.push_back(val.as<double>());
 
-  if (!config["rho2_L"]) throw std::runtime_error("Config::Load(" + filename + "): Missing required node: rho2_L");
-  for (const auto& val : config["rho2_L"]) cfg.rho2_L.push_back(val.as<double>());
+  if (!config["rho2_pion"])
+    throw std::runtime_error("Config::Load(" + filename + "): Missing required node: rho2_pion");
+  for (const auto& val : config["rho2_pion"]) cfg.rho2_pion.push_back(val.as<double>());
+
+  if (!config["rho2_kaon"])
+    throw std::runtime_error("Config::Load(" + filename + "): Missing required node: rho2_kaon");
+  for (const auto& val : config["rho2_kaon"]) cfg.rho2_kaon.push_back(val.as<double>());
 
   if (!config["Rx"]) throw std::runtime_error("Config::Load(" + filename + "): Missing required node: Rx");
   for (const auto& val : config["Rx"]) cfg.Rx.push_back(val.as<double>());
 
   // Particle ratio and debug
-  if (!config["ratioProtonLambda"])
-    throw std::runtime_error("Config::Load(" + filename + "): Missing required node: ratioProtonLambda");
-  cfg.ratioProtonLambda = config["ratioProtonLambda"].as<double>();
+  if (!config["ratioProtonPion"])
+    throw std::runtime_error("Config::Load(" + filename + "): Missing required node: ratioProtonPion");
+  cfg.ratioProtonPion = config["ratioProtonPion"].as<double>();
 
-  // ratioProtonInclusive
-  if (config["ratioProtonInclusive"])
-    cfg.ratioProtonInclusive = config["ratioProtonInclusive"].as<double>();
-  else
-    cfg.ratioProtonInclusive = 5.0 / 120.0;
-
-  if (!config["fracLBC"]) throw std::runtime_error("Config::Load(" + filename + "): Missing required node: fracLBC");
-  for (const auto& val : config["fracLBC"]) { cfg.fracLBC.push_back(val.as<double>()); }
+  if (!config["ratioKaonPion"])
+    throw std::runtime_error("Config::Load(" + filename + "): Missing required node: ratioKaonPion");
+  cfg.ratioKaonPion = config["ratioKaonPion"].as<double>();
 
   // Verify that all centrality-binned vectors have the same length
   {
@@ -72,12 +80,14 @@ Config Config::Load(const std::string& filename) {
     check(cfg.NBDHigh, "NBDHigh");
     check(cfg.NBDSigma, "NBDSigma");
     check(cfg.Tkin, "Tkin");
+    check(cfg.TkinSigma, "TkinSigma");
     check(cfg.betaT, "betaT");
+    check(cfg.betaTSigma, "betaTSigma");
     check(cfg.n, "n");
     check(cfg.rho2_p, "rho2_p");
-    check(cfg.rho2_L, "rho2_L");
+    check(cfg.rho2_pion, "rho2_pion");
+    check(cfg.rho2_kaon, "rho2_kaon");
     check(cfg.Rx, "Rx");
-    check(cfg.fracLBC, "fracLBC");
   }
 
   return cfg;

@@ -7,7 +7,7 @@
 #include <sstream>
 #include <string>
 
-#include "AnalyzerCVE.h"
+#include "AnalyzerV0.h"
 #include "Config.h"
 #include "EventFactory.h"
 
@@ -20,9 +20,6 @@ static void PrintUsage() {
                "result.root)\n"
             << "  -C, --centrality <int>    Centrality % (one of 15,25,35,45,55)\n"
             << "  -n, --events <int>       Number of events to simulate (overrides config)\n"
-            << "  -r, --ratio-proton-lambda <float>    Override ratioProtonLambda\n"
-            << "  -i, --ratio-proton-inclusive <float> Override ratioProtonInclusive\n"
-            << "  -f, --frac-lbc <float>               Override fracLBC\n"
             << "  -R, --rho2scale <float>  Scale all rho2_p and rho2_L by given factor\n"
             << "  -B, --betascale <float>  Scale all betaT by given factor\n";
 }
@@ -33,9 +30,8 @@ int main(int argc, char** argv) {
   std::string outputFile = "result.root";
   int centralityArg = -1;
   int nEventsArg = -1;
-  float ratioProtonLambdaArg = -1.0f;
-  float ratioProtonInclusiveArg = -1.0f;
-  float fracLBCArg = -1.0f;
+  float ratioProtonPion = -1.0f;
+  float ratioKaonPion = -1.0f;
   float rho2scaleArg = -1.0f;
   float betascaleArg = -1.0f;
   const struct option longOpts[] = {{"help", no_argument, nullptr, 'h'},
@@ -43,14 +39,11 @@ int main(int argc, char** argv) {
                                     {"output-file", required_argument, nullptr, 'o'},
                                     {"centrality", required_argument, nullptr, 'C'},
                                     {"events", required_argument, nullptr, 'n'},
-                                    {"ratio-proton-lambda", required_argument, nullptr, 'r'},
-                                    {"ratio-proton-inclusive", required_argument, nullptr, 'i'},
-                                    {"frac-lbc", required_argument, nullptr, 'f'},
                                     {"rho2scale", required_argument, nullptr, 'R'},
                                     {"betascale", required_argument, nullptr, 'B'},
                                     {nullptr, 0, nullptr, 0}};
   int opt;
-  while ((opt = getopt_long(argc, argv, "hc:o:C:n:r:i:f:R:B:", longOpts, nullptr)) != -1) {
+  while ((opt = getopt_long(argc, argv, "hc:o:C:n:R:B:", longOpts, nullptr)) != -1) {
     switch (opt) {
       case 'h':
         PrintUsage();
@@ -66,15 +59,6 @@ int main(int argc, char** argv) {
         break;
       case 'n':
         nEventsArg = std::stoi(optarg);
-        break;
-      case 'r':
-        ratioProtonLambdaArg = std::stof(optarg);
-        break;
-      case 'i':
-        ratioProtonInclusiveArg = std::stof(optarg);
-        break;
-      case 'f':
-        fracLBCArg = std::stof(optarg);
         break;
       case 'R':
         rho2scaleArg = std::stof(optarg);
@@ -95,40 +79,23 @@ int main(int argc, char** argv) {
 
   // 2. 加载配置
   Config cfg = Config::Load(configPath);
-
-  if (ratioProtonLambdaArg > 0.0f) {
-    std::cout << "Overriding ratioProtonLambda from " << cfg.ratioProtonLambda << " to " << ratioProtonLambdaArg
-              << std::endl;
-    cfg.ratioProtonLambda = ratioProtonLambdaArg;
-  }
-  if (ratioProtonInclusiveArg > 0.0f) {
-    std::cout << "Overriding ratioProtonInclusive from " << cfg.ratioProtonInclusive << " to "
-              << ratioProtonInclusiveArg << std::endl;
-    cfg.ratioProtonInclusive = ratioProtonInclusiveArg;
-  }
-  if (rho2scaleArg > 0.0f) {
-    std::cout << "Scaling rho2_p and rho2_L by factor " << rho2scaleArg << std::endl;
-    for (auto& v : cfg.rho2_p) v *= rho2scaleArg;
-    for (auto& v : cfg.rho2_L) v *= rho2scaleArg;
-  }
   if (betascaleArg > 0.0f) {
     std::cout << "Scaling betaT by factor " << betascaleArg << std::endl;
     for (auto& v : cfg.betaT) v *= betascaleArg;
   }
   size_t idx = 0;
-  if (centralityArg == 25) idx = 1;
-  else if (centralityArg == 35) idx = 2;
-  else if (centralityArg == 45) idx = 3;
-  else if (centralityArg == 55) idx = 4;
-  if (fracLBCArg > 0.0f) {
-    std::cout << "Overriding fracLBC[" << idx << "] from " << cfg.fracLBC[idx]
-              << " to " << fracLBCArg << std::endl;
-    cfg.fracLBC[idx] = fracLBCArg;
-  }
+  if (centralityArg == 25)
+    idx = 1;
+  else if (centralityArg == 35)
+    idx = 2;
+  else if (centralityArg == 45)
+    idx = 3;
+  else if (centralityArg == 55)
+    idx = 4;
   // Generate output file name based on centrality, fracLBC and optional scales
   {
     std::ostringstream ofname;
-    ofname << "results_cent" << centralityArg << "_fLBC" << cfg.fracLBC[idx];
+    ofname << "results_cent" << centralityArg;
     if (rho2scaleArg > 0.0f) ofname << "_rho2scale" << rho2scaleArg;
     if (betascaleArg > 0.0f) ofname << "_betascale" << betascaleArg;
     ofname << ".root";
@@ -152,16 +119,13 @@ int main(int argc, char** argv) {
   std::cout << ">>>Output ROOT file:       " << outputFile << "\n";
   std::cout << ">>>Centrality:             " << centralityArg << "\n";
   std::cout << ">>>Number of events:       " << cfg.nEvents << "\n";
-  std::cout << ">>>ratioProtonLambda:      " << cfg.ratioProtonLambda << "\n";
-  std::cout << ">>>ratioProtonInclusive:   " << cfg.ratioProtonInclusive << "\n";
-  std::cout << ">>>fracLBC:                " << cfg.fracLBC[idx] << "\n";
   std::cout << ">>>rho2scale:              " << (rho2scaleArg > 0.0f ? rho2scaleArg : 1.0f) << "\n";
   std::cout << ">>>betascale:              " << (betascaleArg > 0.0f ? betascaleArg : 1.0f) << "\n";
   std::cout << "==================================================================================\n";
 
   // 3. 实例化事件生成器和分析器
   EventFactory factory(cfg);
-  AnalyzerCVE analyzer;
+  AnalyzerV0 analyzer;
   analyzer.Init();
 
   // Progress bar

@@ -16,17 +16,19 @@ struct Config {
   std::vector<double> NBDSigma;
   // Kinetic freeze-out temperature per centrality bin
   std::vector<double> Tkin;
+  std::vector<double> TkinSigma;
   // Blast-Wave flow parameters
   std::vector<double> betaT;
+  std::vector<double> betaTSigma;
   std::vector<double> n;
   std::vector<double> rho2_p;
-  std::vector<double> rho2_L;
+  std::vector<double> rho2_pion;
+  std::vector<double> rho2_kaon;
   std::vector<double> Rx;
 
   // Particle ratio & debug flag
-  double ratioProtonLambda;
-  double ratioProtonInclusive;
-  std::vector<double> fracLBC;
+  double ratioProtonPion;
+  double ratioKaonPion;
 
   /// Load configuration from a YAML file
   static Config Load(const std::string& filename);
