@@ -33,21 +33,31 @@ class AnalyzerV0 {
   TProfile* p_meanPt_Pos;
   TProfile* p_meanPt_Neg;
   TProfile* p_meanPt_Neg_mul_Pos;
+  TProfile* p_meanPt_All;
+  TProfile* p_meanPtSqu_All;
 
   // f(pt)(-) 与 f(pt)*meanPt(+)
   TProfile* f_pt_Neg[kNSpecies];
   TProfile* f_pt_Neg_mul_Pos[kNSpecies];
+  TProfile* f_pt_All[kNSpecies];
+  TProfile* f_pt_All_mul_all[kNSpecies];
 
   TH1D* h_mult;
   TH1D* h_mult_pass;
+  TH1D* h_pt[kNSpecies];
 
   // v2(pt) = <cos2φ>
   TProfile* p_v2_pt[kNSpecies];
 
   // 单事件容器
   TH1D* f_pt_Neg_thisEvt[kNSpecies];
+  TH1D* f_pt_All_thisEvt[kNSpecies];
   TProfile* p_meanPt_Pos_thisEvt;
   TProfile* p_meanPt_Neg_thisEvt;
+  TProfile* p_meanPt_All_thisEvt;
+  /////temp betaT check
+  TH1D* h_temp;
+  TH1D* h_betaT;
 };
 
 #endif  // ANALYZER_V0_H

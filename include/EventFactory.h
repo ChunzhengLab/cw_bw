@@ -41,7 +41,7 @@ class EventFactory {
   void BuildParticles(Event& evt);
   inline void SeedEmissionPoint(float& x, float& y, int bin) const;
   inline int GivePidBasedOnRatio(float ratioKpi, float ratioPpi) const;
-  TVector3 GetLocalBoostVector(float x, float y, int bin, int pid) const;
+  TVector3 GetLocalBoostVector(float x, float y, float betaT, int bin, int pid) const;
   double SampleEnergy(int bin, int pid) const;
   inline std::array<double, 3> SampleDirection() const;
 };

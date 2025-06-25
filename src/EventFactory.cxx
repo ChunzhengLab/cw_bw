@@ -43,24 +43,20 @@ EventFactory::EventFactory(const Config& cfg) : cfg_(cfg) {
     double mass_p = Particle::kMassProton;
     double mass_kaon = Particle::kMassKaon;
     double mass_pion = Particle::kMassPion;
-    double T_mu = cfg_.Tkin[i];
-    double T_sigma = cfg_.TkinSigma[i];
-    double temp = T_mu + gauss_(rng_) * T_sigma;
-
     double Emax_p = std::sqrt(mass_p * mass_p + pMax * pMax);
     auto fp = std::make_unique<TF1>(Form("fE_p_%d", i), MaxwellJuttnerKernel, mass_p, Emax_p, 2);
     fp->SetParameter(0, mass_p);
-    fp->SetParameter(1, temp);
+    // fp->SetParameter(1, temp);
     fE_proton_.push_back(std::move(fp));
     double Emax_kaon = std::sqrt(mass_kaon * mass_kaon + pMax * pMax);
     auto fk = std::make_unique<TF1>(Form("fE_kaon_%d", i), MaxwellJuttnerKernel, mass_kaon, Emax_kaon, 2);
     fk->SetParameter(0, mass_kaon);
-    fk->SetParameter(1, temp);
+    // fk->SetParameter(1, temp);
     fE_kaon_.push_back(std::move(fk));
     double Emax_pion = std::sqrt(mass_pion * mass_pion + pMax * pMax);
     auto f_pion = std::make_unique<TF1>(Form("fE_pion_%d", i), MaxwellJuttnerKernel, mass_pion, Emax_pion, 2);
     f_pion->SetParameter(0, mass_pion);
-    f_pion->SetParameter(1, temp);
+    //  f_pion->SetParameter(1, temp);
     fE_pion_.push_back(std::move(f_pion));
   }
 }
@@ -70,6 +66,17 @@ Event EventFactory::GetEvent(float centrality) {
   Event evt;
   evt.centrality = centrality;
   DetermineCentBin(evt);
+  double betaT_mu = cfg_.betaT[evt.centBin];
+  double betaT_sigma = cfg_.betaTSigma[evt.centBin];
+  evt.betaT = betaT_mu + gauss_(rng_) * betaT_sigma;
+  // std::cout << "betaT=" << evt.betaT << std::endl;
+  double T_mu = cfg_.Tkin[evt.centBin];
+  double T_sigma = cfg_.TkinSigma[evt.centBin];
+  evt.temp = T_mu + gauss_(rng_) * T_sigma;
+  fE_pion_[evt.centBin]->SetParameter(1, evt.temp);
+  fE_kaon_[evt.centBin]->SetParameter(1, evt.temp);
+  fE_proton_[evt.centBin]->SetParameter(1, evt.temp);
+  // std::cout << "temp=" << evt.temp << std::endl;
   BuildParticles(evt);
   return evt;
 }
@@ -107,8 +114,7 @@ void EventFactory::BuildParticles(Event& evt) {
   unsigned int multiplicity;
   do {
     multiplicity = static_cast<unsigned int>(nbdist(rng_));
-  } while (multiplicity < static_cast<unsigned int>(cfg_.NBDLow[bin]) ||
-           multiplicity > static_cast<unsigned int>(cfg_.NBDHigh[bin]));
+  } while (multiplicity < static_cast<unsigned int>(cfg_.NBDLow[bin]) || multiplicity > static_cast<unsigned int>(cfg_.NBDHigh[bin]));
 
   evt.particles.clear();
   evt.particles.reserve(2 * multiplicity);
@@ -125,12 +131,10 @@ void EventFactory::BuildParticles(Event& evt) {
     int pid = GivePidBasedOnRatio(cfg_.ratioKaonPion, cfg_.ratioProtonPion);
 
     // 3) 计算流场 boost (species-dependent ρ2)
-    TVector3 boost = GetLocalBoostVector(x, y, bin, pid);
+    TVector3 boost = GetLocalBoostVector(x, y, evt.betaT, bin, pid);
 
     // 4) 质量/温度
-    double mass = (std::abs(pid) == 211   ? Particle::kMassPion
-                   : std::abs(pid) == 321 ? Particle::kMassKaon
-                                          : Particle::kMassProton);
+    double mass = (std::abs(pid) == 211 ? Particle::kMassPion : std::abs(pid) == 321 ? Particle::kMassKaon : Particle::kMassProton);
     // 5) 动量抽样
     double E = SampleEnergy(bin, pid);
     // compute momentum magnitude p* from energy and mass
@@ -162,7 +166,7 @@ inline void EventFactory::SeedEmissionPoint(float& x, float& y, int bin) const {
 }
 
 // 计算流场 boost 向量
-TVector3 EventFactory::GetLocalBoostVector(float x, float y, int bin, int pid) const {
+TVector3 EventFactory::GetLocalBoostVector(float x, float y, float betaT, int bin, int pid) const {
   // Elliptical coordinates & normalized radius
   double Rx = cfg_.Rx[bin];
   double Ry = kRyDefault;
@@ -173,15 +177,9 @@ TVector3 EventFactory::GetLocalBoostVector(float x, float y, int bin, int pid) c
   // double phi_s = std::atan2(y / Ry, x / Rx);
 
   // flow rapidity parameters
-  double betaT_mu = cfg_.betaT[bin];
-  double betaT_sigma = cfg_.betaTSigma[bin];
-  double betaT = betaT_mu + gauss_(rng_) * betaT_sigma;
-
   double rho0 = std::atanh(betaT);
   // choose anisotropy based on particle type
-  double rho2 = (std::abs(pid) == 211   ? cfg_.rho2_pion[bin]
-                 : std::abs(pid) == 321 ? cfg_.rho2_kaon[bin]
-                                        : cfg_.rho2_p[bin]);
+  double rho2 = (std::abs(pid) == 211 ? cfg_.rho2_pion[bin] : std::abs(pid) == 321 ? cfg_.rho2_kaon[bin] : cfg_.rho2_p[bin]);
   double phi_b = ComputePhiBFromPhiS(phi_s, Rx, Ry);
   double rhob = std::pow(r_norm, cfg_.n[bin]) * (rho0 + rho2 * std::cos(2 * phi_b));
 
@@ -190,8 +188,7 @@ TVector3 EventFactory::GetLocalBoostVector(float x, float y, int bin, int pid) c
 
   // construct fluid four-velocity and return its boost vector
   TLorentzVector u;
-  u.SetXYZT(std::sinh(rhob) * std::cos(phi_b), std::sinh(rhob) * std::sin(phi_b), std::cosh(rhob) * std::sinh(etas),
-            std::cosh(rhob) * std::cosh(etas));
+  u.SetXYZT(std::sinh(rhob) * std::cos(phi_b), std::sinh(rhob) * std::sin(phi_b), std::cosh(rhob) * std::sinh(etas), std::cosh(rhob) * std::cosh(etas));
   return u.BoostVector();
 }
 

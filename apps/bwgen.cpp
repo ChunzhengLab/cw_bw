@@ -26,7 +26,7 @@ static void PrintUsage() {
 
 int main(int argc, char** argv) {
   // 1. 解析命令行参数
-  std::string configPath = "../configs/default.yaml";
+  std::string configPath = "/Users/mojie/Works/Models/cw_bw/configs/default.yaml";
   std::string outputFile = "result.root";
   int centralityArg = -1;
   int nEventsArg = -1;
@@ -93,11 +93,27 @@ int main(int argc, char** argv) {
   else if (centralityArg == 55)
     idx = 4;
   // Generate output file name based on centrality, fracLBC and optional scales
+  double kinTemp = cfg.Tkin[idx];  // GeV
+  double kinTempSigma = cfg.TkinSigma[idx];
+  double betaT = cfg.betaT[idx];
+  double betaTSigma = cfg.betaTSigma[idx];
+  double rho2 = cfg.rho2_p[idx];
+  int betaT_int = static_cast<int>(std::round(betaT * 1000));
+  int temp_int = static_cast<int>(std::round(kinTemp * 1000));
+  int betaTSigma_int = static_cast<int>(std::round(betaTSigma * 1000));
+  int tempSigma_int = static_cast<int>(std::round(kinTempSigma * 1000));
+  int rho2_int = static_cast<int>(std::round(rho2 * 1000));
   {
     std::ostringstream ofname;
     ofname << "results_cent" << centralityArg;
     if (rho2scaleArg > 0.0f) ofname << "_rho2scale" << rho2scaleArg;
     if (betascaleArg > 0.0f) ofname << "_betascale" << betascaleArg;
+    ofname << "_betaT" << betaT_int;
+    ofname << "_betaTSigma" << betaTSigma_int;
+    ofname << "_Temp" << temp_int;
+    ofname << "_TempSigma" << tempSigma_int;
+    ofname << "_rho2_" << rho2_int;
+    ofname << "_Nevt" << nEventsArg;
     ofname << ".root";
     outputFile = ofname.str();
   }
@@ -110,8 +126,8 @@ int main(int argc, char** argv) {
 
   // Startup banner
   std::cout << "==================================================================================\n";
-  std::cout << "         Chunzheng Wang's Blast Wave Model with Local Charge Conservation \n";
-  std::cout << "             Author: Chunzheng Wang (chunzheng.wang@icloud.com) \n";
+  std::cout << "         Chunzheng Wang and Jie Wan's Blast Wave Model with Local Charge Conservation \n";
+  std::cout << "             Author: Chunzheng Wang, Jie Wan (chunzheng.wang@icloud.com) \n";
   std::cout << "==================================================================================\n";
 
   // === Simulation Parameters ===
@@ -134,8 +150,7 @@ int main(int argc, char** argv) {
     unsigned int pos = static_cast<unsigned int>(width * current / cfg.nEvents);
     std::cout << "\r[";
     for (unsigned int i = 0; i < width; ++i) { std::cout << (i < pos ? '=' : ' '); }
-    std::cout << "] " << std::setw(3) << (100 * current / cfg.nEvents) << "% (" << current << "/" << cfg.nEvents << ")"
-              << std::flush;
+    std::cout << "] " << std::setw(3) << (100 * current / cfg.nEvents) << "% (" << current << "/" << cfg.nEvents << ")" << std::flush;
     if (current == cfg.nEvents) std::cout << std::endl;
   };
 
@@ -149,7 +164,7 @@ int main(int argc, char** argv) {
     float centrality = centralityArg;
     Event evt = factory.GetEvent(centrality);
     analyzer.Process(evt);
-    printProgress(i + 1);
+    //  printProgress(i + 1);
   }
 
   // 6. 写出所有直方图到 ROOT 文件

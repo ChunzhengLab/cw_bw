@@ -64,6 +64,8 @@ class Particle {
 struct Event {
   float centrality;                 // Event centrality (0–100)
   int centBin;                      // Centrality bin index
+  float betaT;                      // Event betaT
+  float temp;                       // Event temp
   std::vector<Particle> particles;  // List of particles in this event
 
   inline size_t Multiplicity() const {
@@ -71,6 +73,12 @@ struct Event {
   }
   inline float Centrality() const {
     return centrality;
+  }
+  inline float GetBetaT() const {
+    return betaT;
+  }
+  inline float GetTemp() const {
+    return temp;
   }
   inline const std::vector<Particle>& GetParticles() const {
     return particles;
