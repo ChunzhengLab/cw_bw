@@ -1,5 +1,8 @@
 # cw_bw
 
+- **Some issues are known to exist.**
+- **So although it is under the MIT license, please contact the author before use.**
+
 `cw_bw` is a lightweight simulation and fitting framework for investigating local baryon conservation (LBC) effects in heavy-ion collisions. It features a blast-wave event generator, with a standalone blast wave fitter on spectrum and elliptic flow.
 
 ## Project Structure
