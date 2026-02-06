@@ -30,7 +30,7 @@ static void PrintUsage() {
 int main(int argc, char** argv) {
   // 1. 解析命令行参数
   std::string configPath = "../configs/default.yaml";
-  std::string outputFile = "result.root";
+  std::string outputFile = "";
   int centralityArg = -1;
   int nEventsArg = -1;
   float ratioProtonLambdaArg = -1.0f;
@@ -126,7 +126,8 @@ int main(int argc, char** argv) {
     cfg.fracLBC[idx] = fracLBCArg;
   }
   // Generate output file name based on centrality, fracLBC and optional scales
-  {
+  // only when the user didn't specify -o
+  if (outputFile.empty()) {
     std::ostringstream ofname;
     ofname << "results_cent" << centralityArg << "_fLBC" << cfg.fracLBC[idx];
     if (rho2scaleArg > 0.0f) ofname << "_rho2scale" << rho2scaleArg;

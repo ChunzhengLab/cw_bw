@@ -147,7 +147,8 @@ void EventFactory::BuildParticles(Event& evt) {
       else pid_friend = -pid;
 
       double E_friend = SampleEnergy(bin, pid_friend);
-      double p_star_friend = std::sqrt(E_friend * E_friend - mass * mass);
+      double mass_friend = (std::abs(pid_friend) == 2212 ? Particle::kMassProton : Particle::kMassLambda);
+      double p_star_friend = std::sqrt(E_friend * E_friend - mass_friend * mass_friend);
       auto dir_friend = SampleDirection();
       TLorentzVector mom_friend(dir_friend[0] * p_star_friend, dir_friend[1] * p_star_friend,
                                 dir_friend[2] * p_star_friend, E_friend);

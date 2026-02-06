@@ -34,6 +34,8 @@ class Particle {
     return momentum_.Phi();
   }
   inline int Charge() const {
+    int absPid = pid_ > 0 ? pid_ : -pid_;
+    if (absPid == 3122) return 0;  // Lambda is neutral
     return (pid_ > 0 ? 1 : -1);
   }
 

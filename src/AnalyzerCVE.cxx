@@ -185,7 +185,7 @@ void AnalyzerCVE::Process(const Event& evt) {
     if (phi < 0) phi += 2 * M_PI;
     if (pt < 0.2f || pt > 5.0f || std::fabs(eta) > 0.8f) continue;
 
-    if (pid == 3122) {
+    if (std::abs(pid) == 3122) {
       h_pt_lambda->Fill(pt);
       h_eta_lambda->Fill(eta);
       h_phi_lambda->Fill(phi);
@@ -263,13 +263,21 @@ void AnalyzerCVE::Process(const Event& evt) {
       p_gamma_vs_etaGap.at(key)->Fill(eta_gap, gamma);
 
       // Flow vs sumPt/etaGap
-      if (pid1 == 3122) {
+      if (std::abs(pid1) == 3122) {
         p_v2_lambda_sumPt->Fill(sumPt, std::cos(2 * phi1));
         p_v2_lambda_etaGap->Fill(eta_gap, std::cos(2 * phi1));
       }
-      if (pid1 == 2212) {
+      if (std::abs(pid1) == 2212) {
         p_v2_proton_sumPt->Fill(sumPt, std::cos(2 * phi1));
         p_v2_proton_etaGap->Fill(eta_gap, std::cos(2 * phi1));
+      }
+      if (std::abs(pid2) == 3122) {
+        p_v2_lambda_sumPt->Fill(sumPt, std::cos(2 * phi2));
+        p_v2_lambda_etaGap->Fill(eta_gap, std::cos(2 * phi2));
+      }
+      if (std::abs(pid2) == 2212) {
+        p_v2_proton_sumPt->Fill(sumPt, std::cos(2 * phi2));
+        p_v2_proton_etaGap->Fill(eta_gap, std::cos(2 * phi2));
       }
     }
   }
