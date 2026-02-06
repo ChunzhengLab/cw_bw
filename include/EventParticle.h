@@ -7,6 +7,8 @@
 
 class Particle {
  public:
+  static constexpr double kMassPion = 0.13957;
+  static constexpr double kMassKaon = 0.49368;
   static constexpr double kMassProton = 0.938272;
   static constexpr double kMassLambda = 1.115683;
   Particle(int pid, const TLorentzVector& momentum) : pid_(pid), momentum_(momentum) {

@@ -1,13 +1,14 @@
 #include <getopt.h>
 
-#include <cstdlib>
 #include <iomanip>
 #include <iostream>
-#include <random>
 #include <sstream>
 #include <string>
 
+#include <TFile.h>
+
 #include "AnalyzerCVE.h"
+#include "AnalyzerRawOutput.h"
 #include "Config.h"
 #include "EventFactory.h"
 
@@ -20,6 +21,8 @@ static void PrintUsage() {
                "result.root)\n"
             << "  -C, --centrality <int>    Centrality % (one of 15,25,35,45,55)\n"
             << "  -n, --events <int>       Number of events to simulate (overrides config)\n"
+            << "  -m, --mode <string>      Generation mode: pikp (pi/K/p) or plambda (p/Lambda, default)\n"
+            << "  -a, --output-mode <string> Output content: tree or hist (default: hist)\n"
             << "  -r, --ratio-proton-lambda <float>    Override ratioProtonLambda\n"
             << "  -i, --ratio-proton-inclusive <float> Override ratioProtonInclusive\n"
             << "  -f, --frac-lbc <float>               Override fracLBC\n"
@@ -31,6 +34,8 @@ int main(int argc, char** argv) {
   // 1. 解析命令行参数
   std::string configPath = "../configs/default.yaml";
   std::string outputFile = "";
+  std::string modeStr = "plambda";
+  std::string outputModeStr = "hist";
   int centralityArg = -1;
   int nEventsArg = -1;
   float ratioProtonLambdaArg = -1.0f;
@@ -43,6 +48,8 @@ int main(int argc, char** argv) {
                                     {"output-file", required_argument, nullptr, 'o'},
                                     {"centrality", required_argument, nullptr, 'C'},
                                     {"events", required_argument, nullptr, 'n'},
+                                    {"mode", required_argument, nullptr, 'm'},
+                                    {"output-mode", required_argument, nullptr, 'a'},
                                     {"ratio-proton-lambda", required_argument, nullptr, 'r'},
                                     {"ratio-proton-inclusive", required_argument, nullptr, 'i'},
                                     {"frac-lbc", required_argument, nullptr, 'f'},
@@ -50,7 +57,7 @@ int main(int argc, char** argv) {
                                     {"betascale", required_argument, nullptr, 'B'},
                                     {nullptr, 0, nullptr, 0}};
   int opt;
-  while ((opt = getopt_long(argc, argv, "hc:o:C:n:r:i:f:R:B:", longOpts, nullptr)) != -1) {
+  while ((opt = getopt_long(argc, argv, "hc:o:C:n:m:a:r:i:f:R:B:", longOpts, nullptr)) != -1) {
     switch (opt) {
       case 'h':
         PrintUsage();
@@ -66,6 +73,12 @@ int main(int argc, char** argv) {
         break;
       case 'n':
         nEventsArg = std::stoi(optarg);
+        break;
+      case 'm':
+        modeStr = optarg;
+        break;
+      case 'a':
+        outputModeStr = optarg;
         break;
       case 'r':
         ratioProtonLambdaArg = std::stof(optarg);
@@ -90,6 +103,22 @@ int main(int argc, char** argv) {
 
   if (centralityArg != 15 && centralityArg != 25 && centralityArg != 35 && centralityArg != 45 && centralityArg != 55) {
     std::cerr << "Error: --centrality must be one of {15, 25, 35, 45, 55}\n";
+    return 1;
+  }
+
+  GenerationMode genMode;
+  if (modeStr == "pikp") {
+    genMode = GenerationMode::kPiKP;
+  } else if (modeStr == "plambda") {
+    genMode = GenerationMode::kPLambda;
+  } else {
+    std::cerr << "Error: --mode must be 'pikp' or 'plambda'\n";
+    return 1;
+  }
+
+  bool useTree = (outputModeStr == "tree");
+  if (outputModeStr != "tree" && outputModeStr != "hist") {
+    std::cerr << "Error: --output-mode must be 'tree' or 'hist'\n";
     return 1;
   }
 
@@ -151,6 +180,8 @@ int main(int argc, char** argv) {
   // === Simulation Parameters ===
   std::cout << ">>>Config file:            " << configPath << "\n";
   std::cout << ">>>Output ROOT file:       " << outputFile << "\n";
+  std::cout << ">>>Generation mode:        " << modeStr << "\n";
+  std::cout << ">>>Output mode:            " << outputModeStr << "\n";
   std::cout << ">>>Centrality:             " << centralityArg << "\n";
   std::cout << ">>>Number of events:       " << cfg.nEvents << "\n";
   std::cout << ">>>ratioProtonLambda:      " << cfg.ratioProtonLambda << "\n";
@@ -160,10 +191,17 @@ int main(int argc, char** argv) {
   std::cout << ">>>betascale:              " << (betascaleArg > 0.0f ? betascaleArg : 1.0f) << "\n";
   std::cout << "==================================================================================\n";
 
-  // 3. 实例化事件生成器和分析器
-  EventFactory factory(cfg);
-  AnalyzerCVE analyzer;
-  analyzer.Init();
+  // 3. 打开输出文件，实例化事件生成器和分析器
+  TFile outFile(outputFile.c_str(), "RECREATE");
+  EventFactory factory(cfg, genMode);
+
+  AnalyzerCVE analyzerCVE;
+  AnalyzerRawOutput analyzerRaw;
+  if (useTree) {
+    analyzerRaw.Init();
+  } else {
+    analyzerCVE.Init();
+  }
 
   // Progress bar
   auto printProgress = [&](unsigned int current) {
@@ -176,21 +214,21 @@ int main(int argc, char** argv) {
     if (current == cfg.nEvents) std::cout << std::endl;
   };
 
-  // 4. 随机数引擎，用随机设备进行初始化
-  std::random_device rd;
-  std::mt19937 rng(rd());
-  // std::uniform_real_distribution<float> centralityDist(0.0f, 100.0f);
-
-  // 5. 事件循环
+  // 4. 事件循环
   for (unsigned int i = 0; i < static_cast<unsigned int>(cfg.nEvents); ++i) {
     float centrality = centralityArg;
     Event evt = factory.GetEvent(centrality);
-    analyzer.Process(evt);
+    if (useTree) {
+      analyzerRaw.Process(evt);
+    } else {
+      analyzerCVE.Process(evt);
+    }
     printProgress(i + 1);
   }
 
-  // 6. 写出所有直方图到 ROOT 文件
-  analyzer.Write(outputFile);
+  // 5. 写出并关闭
+  outFile.Write();
+  outFile.Close();
 
   std::cout << "Simulation completed. Output saved to " << outputFile << std::endl;
   return 0;

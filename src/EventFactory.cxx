@@ -33,25 +33,33 @@ inline double ComputePhiBFromPhiS(double phi_s, double Rx, double Ry) {
   return phi_b;
 }
 
-EventFactory::EventFactory(const Config& cfg) : cfg_(cfg) {
+// Helper: build a Maxwell–Jüttner TF1 for a given mass, temperature, and bin index
+static std::unique_ptr<TF1> BuildMJSampler(const char* prefix, int bin, double mass, double temp) {
+  double Emax = std::sqrt(mass * mass + kMaxMomentum * kMaxMomentum);
+  auto f = std::make_unique<TF1>(Form("%s_%d", prefix, bin), MaxwellJuttnerKernel, mass, Emax, 2);
+  f->SetParameter(0, mass);
+  f->SetParameter(1, temp);
+  return f;
+}
+
+EventFactory::EventFactory(const Config& cfg, GenerationMode mode) : cfg_(cfg), mode_(mode) {
   int nBins = cfg_.Tkin.size();
   fE_proton_.reserve(nBins);
-  fE_lambda_.reserve(nBins);
-  const double pMax = kMaxMomentum;
+  if (mode_ == GenerationMode::kPiKP) {
+    fE_pion_.reserve(nBins);
+    fE_kaon_.reserve(nBins);
+  } else {
+    fE_lambda_.reserve(nBins);
+  }
   for (int i = 0; i < nBins; ++i) {
-    double mass_p = Particle::kMassProton;
-    double mass_L = Particle::kMassLambda;
     double temp = cfg_.Tkin[i];
-    double Emax_p = std::sqrt(mass_p * mass_p + pMax * pMax);
-    auto fp = std::make_unique<TF1>(Form("fE_p_%d", i), MaxwellJuttnerKernel, mass_p, Emax_p, 2);
-    fp->SetParameter(0, mass_p);
-    fp->SetParameter(1, temp);
-    fE_proton_.push_back(std::move(fp));
-    double Emax_L = std::sqrt(mass_L * mass_L + pMax * pMax);
-    auto fL = std::make_unique<TF1>(Form("fE_L_%d", i), MaxwellJuttnerKernel, mass_L, Emax_L, 2);
-    fL->SetParameter(0, mass_L);
-    fL->SetParameter(1, temp);
-    fE_lambda_.push_back(std::move(fL));
+    fE_proton_.push_back(BuildMJSampler("fE_p", i, Particle::kMassProton, temp));
+    if (mode_ == GenerationMode::kPiKP) {
+      fE_pion_.push_back(BuildMJSampler("fE_pi", i, Particle::kMassPion, temp));
+      fE_kaon_.push_back(BuildMJSampler("fE_K", i, Particle::kMassKaon, temp));
+    } else {
+      fE_lambda_.push_back(BuildMJSampler("fE_L", i, Particle::kMassLambda, temp));
+    }
   }
 }
 
@@ -100,9 +108,11 @@ void EventFactory::BuildParticles(Event& evt) {
   } while (multiplicity < static_cast<unsigned int>(cfg_.NBDLow[bin]) ||
            multiplicity > static_cast<unsigned int>(cfg_.NBDHigh[bin]));
 
-  // 只生成 Lambda 和 Proton，修正多重数
-  multiplicity = static_cast<unsigned int>(multiplicity * cfg_.ratioProtonInclusive * (1.0 + cfg_.ratioProtonLambda) /
-                                           cfg_.ratioProtonLambda);
+  // plambda 模式下修正多重数（只生成 p/Λ）
+  if (mode_ == GenerationMode::kPLambda) {
+    multiplicity = static_cast<unsigned int>(multiplicity * cfg_.ratioProtonInclusive * (1.0 + cfg_.ratioProtonLambda) /
+                                             cfg_.ratioProtonLambda);
+  }
 
   evt.particles.clear();
   evt.particles.reserve(2 * multiplicity);
@@ -121,9 +131,8 @@ void EventFactory::BuildParticles(Event& evt) {
     // 3) 计算流场 boost (species-dependent ρ2)
     TVector3 boost = GetLocalBoostVector(x, y, bin, pid);
 
-    // 4) 质量/温度
-    double mass = (std::abs(pid) == 2212 ? Particle::kMassProton : Particle::kMassLambda);
-    double temp = cfg_.Tkin[bin];
+    // 4) 质量
+    double mass = GetMassFromPid(pid);
 
     // 5) 动量抽样
     double E = SampleEnergy(bin, pid);
@@ -136,18 +145,26 @@ void EventFactory::BuildParticles(Event& evt) {
     Particle p(pid, momentum);
     p.SetSerialNumber(sn);
 
-    // 6) LBC 配对 (inline probability)
-    if (dist01_(rng_) < cfg_.fracLBC[bin]) {
+    // 6) LBC 配对 — 仅对 baryon (proton/lambda) 触发
+    int absPid = std::abs(pid);
+    bool isBaryon = (absPid == 2212 || absPid == 3122);
+    if (isBaryon && dist01_(rng_) < cfg_.fracLBC[bin]) {
       int sn_friend = ++nextSN;
       int pid_friend;
-      if (pid == 2212)       pid_friend = -3122;
-      else if (pid == -2212) pid_friend =  3122;
-      else if (pid == 3122)  pid_friend = -2212;
-      else if (pid == -3122) pid_friend =  2212;
-      else pid_friend = -pid;
+      if (mode_ == GenerationMode::kPiKP) {
+        // pikp 模式：proton ↔ anti-proton
+        pid_friend = -pid;
+      } else {
+        // plambda 模式：交叉物种配对 p ↔ Λ̄, Λ ↔ p̄
+        if (pid == 2212)       pid_friend = -3122;
+        else if (pid == -2212) pid_friend =  3122;
+        else if (pid == 3122)  pid_friend = -2212;
+        else if (pid == -3122) pid_friend =  2212;
+        else pid_friend = -pid;
+      }
 
       double E_friend = SampleEnergy(bin, pid_friend);
-      double mass_friend = (std::abs(pid_friend) == 2212 ? Particle::kMassProton : Particle::kMassLambda);
+      double mass_friend = GetMassFromPid(pid_friend);
       double p_star_friend = std::sqrt(E_friend * E_friend - mass_friend * mass_friend);
       auto dir_friend = SampleDirection();
       TLorentzVector mom_friend(dir_friend[0] * p_star_friend, dir_friend[1] * p_star_friend,
@@ -196,8 +213,8 @@ TVector3 EventFactory::GetLocalBoostVector(float x, float y, int bin, int pid) c
 
   // flow rapidity parameters
   double rho0 = std::atanh(cfg_.betaT[bin]);
-  // choose anisotropy based on particle type
-  double rho2 = (std::abs(pid) == 2212 ? cfg_.rho2_p[bin] : cfg_.rho2_L[bin]);
+  // choose anisotropy based on particle type (pion/kaon share rho2_p with proton)
+  double rho2 = (std::abs(pid) == 3122 ? cfg_.rho2_L[bin] : cfg_.rho2_p[bin]);
   double phi_b = ComputePhiBFromPhiS(phi_s, Rx, Ry);
   double rhob = std::pow(r_norm, cfg_.n[bin]) * (rho0 + rho2 * std::cos(2 * phi_b));
 
@@ -211,18 +228,46 @@ TVector3 EventFactory::GetLocalBoostVector(float x, float y, int bin, int pid) c
   return u.BoostVector();
 }
 
+// 根据 PID 返回对应质量
+double EventFactory::GetMassFromPid(int pid) {
+  switch (std::abs(pid)) {
+    case 211: return Particle::kMassPion;
+    case 321: return Particle::kMassKaon;
+    case 2212: return Particle::kMassProton;
+    case 3122: return Particle::kMassLambda;
+    default: return Particle::kMassProton;
+  }
+}
+
 // 根据比例抽 PID
-inline int EventFactory::GivePidBasedOnRatio(float ratio) const {
-  double p = dist01_(rng_);
-  int pid = (p < ratio / (ratio + 1.0f) ? 2212 : 3122);
+int EventFactory::GivePidBasedOnRatio(float ratio) const {
+  int pid;
+  if (mode_ == GenerationMode::kPiKP) {
+    // π:K:p ≈ 0.83:0.12:0.05
+    double r = dist01_(rng_);
+    if (r < 0.83)
+      pid = 211;
+    else if (r < 0.95)
+      pid = 321;
+    else
+      pid = 2212;
+  } else {
+    double p = dist01_(rng_);
+    pid = (p < ratio / (ratio + 1.0f) ? 2212 : 3122);
+  }
   if (dist01_(rng_) < 0.5) pid = -pid;
   return pid;
 }
 
 double EventFactory::SampleEnergy(int bin, int pid) const {
-  // choose sampler based on species
-  auto& sampler = (std::abs(pid) == 2212 ? fE_proton_[bin] : fE_lambda_[bin]);
-  return sampler->GetRandom();
+  int absPid = std::abs(pid);
+  switch (absPid) {
+    case 211: return fE_pion_[bin]->GetRandom();
+    case 321: return fE_kaon_[bin]->GetRandom();
+    case 2212: return fE_proton_[bin]->GetRandom();
+    case 3122: return fE_lambda_[bin]->GetRandom();
+    default: return fE_proton_[bin]->GetRandom();
+  }
 }
 
 // 均匀方向抽样
