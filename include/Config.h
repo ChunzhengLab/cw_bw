@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-/// Configuration parameters loaded from YAML
+/// Configuration parameters loaded from config file
 struct Config {
   // General simulation settings
   int nEvents;
@@ -28,6 +28,6 @@ struct Config {
   double ratioProtonInclusive;
   std::vector<double> fracLBC;
 
-  /// Load configuration from a YAML file
+  /// Load configuration from a config file
   static Config Load(const std::string& filename);
 };

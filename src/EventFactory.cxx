@@ -36,7 +36,7 @@ inline double ComputePhiBFromPhiS(double phi_s, double Rx, double Ry) {
 // Helper: build a Maxwell–Jüttner TF1 for a given mass, temperature, and bin index
 static std::unique_ptr<TF1> BuildMJSampler(const char* prefix, int bin, double mass, double temp) {
   double Emax = std::sqrt(mass * mass + kMaxMomentum * kMaxMomentum);
-  auto f = std::make_unique<TF1>(Form("%s_%d", prefix, bin), MaxwellJuttnerKernel, mass, Emax, 2);
+  std::unique_ptr<TF1> f(new TF1(Form("%s_%d", prefix, bin), MaxwellJuttnerKernel, mass, Emax, 2));
   f->SetParameter(0, mass);
   f->SetParameter(1, temp);
   return f;

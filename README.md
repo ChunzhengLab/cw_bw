@@ -68,9 +68,8 @@ root -l -b -q run_batch.C
 
 This module fits identified particle spectra using the blast-wave model:
 
-$$
-\\frac{1}{2\\pi p_T}\\frac{d^2N}{dp_T\\,dy} \\propto \\int_0^R rdr \\int_0^{2\\pi} d\\phi \\, m_T I_0\\left(\\frac{p_T\\sinh\\rho}{T}\\right) K_1\\left(\\frac{m_T\\cosh\\rho}{T}\\right)
-$$
+$$\frac{1}{2 \pi p_T} \frac{d^2N}{dp_T \,dy} \propto \int_0^R rdr \int_0^{2\pi} d\phi \, m_T I_0\left(\frac{p_T\sinh\rho}{T}\right) K_1\left(\frac{m_T\cosh\rho}{T}\right)$$
+
 
 You can adjust flow parameters like `T_kin`, `beta_T`, and `n` inside `BlastWaveFitter.C`.
 
